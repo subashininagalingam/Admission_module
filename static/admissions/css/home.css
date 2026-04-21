@@ -1,0 +1,53 @@
+body{
+    position: relative;
+    top: 100px;
+}
+
+.home-container{
+    position: relative; 
+    top: 150px;
+}
+h1{
+    text-align: center;
+    color: #333;
+}
+p{
+    text-align: center;
+    color: #666;
+    font-size: 18px;
+}
+a{
+    text-decoration: none;
+    color: white;
+}
+button{
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: orangered;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+@media(max-width: 550px) {
+    body{
+        position: relative;
+        top: 150px;
+    }
+    .home-container {
+        top: 100px;
+    }
+    h1 {
+        font-size: 16px;
+    }
+    p {
+        font-size: 12px;
+    }
+    button {
+        padding: 4px 8px;
+        font-size: 14px;
+    }
+}

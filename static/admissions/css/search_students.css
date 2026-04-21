@@ -1,0 +1,80 @@
+body{
+    position: relative;
+    top:50px;
+}
+
+table {
+    width: 100%;
+}
+
+table,
+th,
+td {
+    text-align: left;
+    padding: 5px;
+}
+
+th {
+    background-color: #f7f0f0;
+}
+
+td {
+    border-bottom: 1px solid #ddd;
+}
+
+a {
+    text-decoration: none;
+}
+button{
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+
+button:hover {
+    background-color: rgb(63, 93, 158);
+    color: white;
+}
+
+a:hover {
+    background-color: rgb(63, 93, 158);
+    color: white;
+}
+
+@media(max-width: 550px) {
+    body {
+        background-color: whitesmoke;
+        position: relative;
+        top: 50px;
+    }   
+    a{
+        text-decoration: none;
+        color:black;
+    }
+
+     h2 {
+        font-size: 18px;
+    }
+    input[type="text"], input[type="number"], input[type="email"] {
+        width: 50%;
+        padding: 8px;
+        position: relative;
+        left: 0;
+    }
+
+    table {
+        width: 50%;
+    }
+    th,
+    td {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    img {
+        width: 50px;
+        height: 50px;
+    }
+}

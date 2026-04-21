@@ -1,0 +1,55 @@
+{% extends 'admissions/base.html' %}
+{% load static %}
+{% block title %}
+    <title>Search Students</title>
+{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'admissions/css/search_students.css' %}">
+{% endblock %}
+
+{% block content %}
+    <h2>Search & Filter Students</h2>
+
+<form method="GET">
+    <label>Name:</label>
+    {{ filter.form.name }}<br><br>
+    <label>Student ID:</label>
+    {{ filter.form.id }}<br><br>
+    <label>Mobile No:</label>
+    {{ filter.form.mobile_no }}<br><br>
+    <label>Email:</label>
+    {{ filter.form.email }}<br><br>
+    <button type="submit">Apply Filter</button>
+</form>
+
+<hr>
+
+<table>
+<tr>
+    <th>Name</th>
+    <th>Student ID</th>
+    <th>Mobile No</th>
+    <th>Email</th>
+    <th>Actions</th>
+</tr>
+
+{% for s in filter.qs %}
+<tr>
+    <td>{{ s.name }}</td>
+    <td>{{ s.id }}</td>
+    <td>{{ s.mobile_no }}</td>
+    <td>{{ s.email }}</td>
+    <td>
+        
+       <button><a href="{% url 'view_student' s.id %}">View</a></button>
+        
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td>No data found</td>
+</tr>
+{% endfor %}
+</table>
+
+{% endblock %}

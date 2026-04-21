@@ -1,0 +1,16 @@
+from django.urls import path
+from . import views
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('',views.home,name='home'),
+    path('student/',views.student,name='student'),
+    path('success/',views.success,name='success'),
+    path('student_list/',views.student_list,name='student_list'),
+    path('edit_student/<int:id>/',views.edit_student,name='edit_student'),
+    path('delete_student/<int:id>/',views.delete_student,name='delete_student'),
+    path('search_students/',views.search_students,name='search_students'),
+    path('view_student/<int:id>/',views.view_student,name='view_student'),
+    
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

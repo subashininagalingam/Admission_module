@@ -1,0 +1,23 @@
+{% extends 'admissions/base.html' %}
+{% load static %}
+{% block title %}
+    <title>View Student</title>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'admissions/css/view_student.css' %}">
+{% endblock %}
+
+
+{% block content %}
+    <h2>Student Details</h2>
+
+    <p><strong>Name:</strong> {{ student.name }}</p>
+    <p><strong>Student ID:</strong> {{ student.id }}</p>
+    <p><strong>Email:</strong> {{ student.email }}</p>
+    <p><strong>Mobile No:</strong> {{ student.mobile_no }}</p>
+    <p><strong>Date of Birth:</strong> {{ student.dob }}</p>
+    <p><strong>Gender:</strong> {{ student.gender }}</p>
+    <p><strong>Address:</strong> {{ student.address }}</p>  
+    <p><strong>Enrollment Date:</strong> {{ student.created_at }}</p>
+{% endblock %}

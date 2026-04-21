@@ -1,0 +1,26 @@
+{% extends 'admissions/base.html' %}
+{% load static %}
+
+{% block title %}
+<title>Student Registration</title>
+{% endblock title %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'admissions/css/register.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Student Registration</h1>
+    <form action="{% url 'student' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{form.as_p}}
+        <button type="submit">Register</button>
+    </form>
+</div>
+{% if students %}
+<script>
+    alert("Student {{ students.name }} registered successfully!");
+</script>
+{% endif %}
+{% endblock content %}

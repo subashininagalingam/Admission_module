@@ -1,0 +1,48 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block title %}
+    <title>Student Management System</title>
+    {% endblock title %}
+    <link rel="stylesheet" href="{% static 'admissions/css/style.css' %}">
+    {% block extra_css %}
+    {% endblock %}
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo">CSC_CRM</div>
+
+        <ul class="nav-links" id="navLinks">
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'student' %}">Student Register</a></li>
+            <li><a href="{% url 'student_list' %}">Student List</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="{% url 'search_students' %}">Search&Filter</a></li>
+        </ul>
+
+        <div class="menu-toggle" id="menuToggle">
+            ☰
+        </div>
+    </nav>
+    {% block content %}
+    {% endblock content %}
+
+    <script>
+        const toggle = document.getElementById("menuToggle");
+        const navLinks = document.getElementById("navLinks");
+
+        toggle.addEventListener("click", () => {
+            navLinks.style.display =
+                navLinks.style.display === "flex" ? "none" : "flex";
+        });
+    </script>
+
+
+</body>
+
+</html>

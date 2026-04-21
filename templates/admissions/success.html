@@ -1,0 +1,21 @@
+{% extends 'admissions/base.html' %}
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'admissions/css/success.css' %}">
+{% endblock %}
+{% block title %}
+    <title>Success</title>
+{% endblock title %}
+{% block content %}
+    <div class="container">
+        <h1>Student Registered Successfully!✅</h1>
+        <p>Thank you for registering  {{ student.name }}.</p>
+        <a href="{% url 'student_list' %}">
+            <button>View Student List</button>
+        </a>
+
+        <a href="{% url 'student' %}">
+            <button>Add Student</button>
+        </a>
+    </div>
+{% endblock content %}

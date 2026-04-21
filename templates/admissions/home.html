@@ -1,0 +1,15 @@
+{% extends 'admissions/base.html' %}
+{% load static %}
+{% block title %}
+    <title>Home</title>
+{% endblock title %}
+{% block extra_css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'admissions/css/home.css' %}">
+{% endblock extra_css %}
+{% block content %}
+<div class="home-container">
+    <h1>Welcome to the Student Management System</h1>
+    <p>Use the navigation menu to manage students.</p>
+    <button><a href="{% url 'student' %}">Add Student</a></button>
+</div>
+{% endblock content %}
