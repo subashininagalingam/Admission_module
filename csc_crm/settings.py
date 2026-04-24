@@ -76,7 +76,7 @@ WSGI_APPLICATION = 'csc_crm.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'csc_crm_db',
+        'NAME': 'CSC_CRM',
         'USER' :'postgres',
         'PASSWORD' :'suba',
         'HOST' :'localhost',

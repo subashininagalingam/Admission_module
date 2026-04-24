@@ -3,7 +3,7 @@
 
 {% block title %}
 <title>Student List</title>
-{% endblock title %}
+{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'admissions/css/student_list.css' %}">
@@ -11,83 +11,180 @@
 
 {% block content %}
 
-<h1>Student List</h1>
-<div class="container2">
-    <table>
-        <h2>Student Information</h2>
-        <div class="table-container">
-            <h3>Total Students: {{ students|length }}</h3>
+<div class="container">
 
-            <form method="get" action="">
-                <select name="format">
-                    <option value="">Select format</option>
-                    <option value="excel">Download as Excel</option>
-                    <option value="pdf">Download as PDF</option>
-                </select>
-                <button class="btn1" type="submit">Download</button>
-            </form>
+    <h2>Student List</h2>
 
+    <!-- FILTER FORM -->
+    <form method="GET" class="top-bar">
 
-            <a href="{% url 'student' %}">
-                <button class="btn2">+ Add new Student</button>
-            </a>
-        </div>
-        <div class="table-container2">
-            <tr>
+        <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search name">
 
-                <th>Name</th>
-                <th>Student ID</th>
-                <th>Mobile No</th>
-                <th>Email</th>
-                <th>Date of Birth</th>
-                <th>Gender</th>
-                <th>Address</th>
-                <th>Photo</th>
-                <th>Documents</th>
-                <th>Actions</th>
-            </tr>
-            {% for student in students %}
-            <tr>
-                <td>{{ student.name }}</td>
-                <td>{{ student.id }}</td>
-                <td>{{ student.mobile_no }}</td>
-                <td>{{ student.email }}</td>
-                <td>{{ student.dob }}</td>
-                <td>{{ student.gender }}</td>
-                <td>{{ student.address }}</td>
-                <td>
-                    {% if student.photo %}
-                    <img src="{{ student.photo.url }}" alt="Photo" width="100">
-                    {% else %}
-                    No Photo
-                    {% endif %}
-                </td>
-                <td>
-                    {% if student.documents %}
-                    <a href="{{ student.documents.url }}" target="_blank">View Documents</a>
-                    {% else %}
-                    No Documents
-                    {% endif %}
-                </td>
-
-                <td>
-                    <a href="{% url 'edit_student' student.id %}">
-                        <button class="edit-btn">Edit</button>
-                    </a>
-                    <a href="{% url 'delete_student' student.id %}">
-                        <button class="delete-btn">Delete</button>
-                    </a>
-                </td>
-            </tr>
+        <select name="course">
+            <option value="">All Course</option>
+            {% for c in courses %}
+            <option value="{{ c.course }}" {% if request.GET.course == c.course %}selected{% endif %}>
+                {{ c.course }}
+            </option>
             {% endfor %}
-        </div>
+        </select>
+
+        <select name="batch">
+            <option value="">All Batch</option>
+
+            <option value="Batch - A" {% if request.GET.batch == "Batch - A" %}selected{% endif %}>
+                Batch - A
+            </option>
+
+            <option value="Batch - B" {% if request.GET.batch == "Batch - B" %}selected{% endif %}>
+                Batch - B
+            </option>
+
+            <option value="Batch - C" {% if request.GET.batch == "Batch - C" %}selected{% endif %}>
+                Batch - C
+            </option>
+        </select>
+
+        <button type="submit">Filter</button>
+    </form>
+
+    Total Students: {{ total_students }}
+
+    <!-- TOP BAR -->
+    <div class="table-container">
+
+        <!-- DOWNLOAD -->
+        <form method="get">
+            <input type="hidden" name="search" value="{{ request.GET.search }}">
+            <input type="hidden" name="course" value="{{ request.GET.course }}">
+            <input type="hidden" name="batch" value="{{ request.GET.batch }}">
+
+            <select name="format">
+                <option value="">Select format</option>
+                <option value="excel">Download Excel</option>
+                <option value="pdf">Download PDF</option>
+            </select>
+
+            <button type="submit">Download</button>
+        </form>
+
+        <a href="{% url 'student' %}">
+            <button class="btn1">+ Add new Student</button>
+        </a>
+    </div>
+
+    <!-- TABLE -->
+    <table>
+        <tr>
+            <th>Student</th>
+            <th>Course</th>
+            <th>Batch</th>
+            <th>Phone</th>
+            <th>Payment</th>
+            <th>Joined</th>
+            <th>Action</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+
+        {% for student in page_obj %}
+        {% if student.enrollments.all %}
+        {% for e in student.enrollments.all %}
+        <tr>
+            <td>{{ student.First_name }} {{ student.Last_name }}</td>
+            <td>{{ e.course }}</td>
+            <td>{{ e.batch }}</td>
+            <td>{{ student.phone_no }}</td>
+            <td>
+                <span class="badge {{ e.payment_status|lower }}">
+                    {{ e.payment_status }}
+                </span>
+            </td>
+            <td>{{ e.start_date }}</td>
+            <td>
+                {% if student.enrollments.exists %}
+                <button disabled style="background: gray;">Enrolled</button>
+                {% else %}
+                <a href="{% url 'enroll' student.id %}">
+                    <button style="background: green; color: white;">Enroll</button>
+                </a>
+                {% endif %}
+            </td>
+            <td>
+                {% if student.enrollments.exists %}
+                <span style="color: green; font-weight: bold;">Enrolled</span>
+                {% else %}
+                <span style="color: red;">Not Enrolled</span>
+                {% endif %}
+            </td>
+            <td class="dropdown">
+                <button class="dots">⋮</button>
+
+                <div class="dropdown-content">
+                    <a href="{% url 'edit_student' student.id %}">Edit</a>
+                    <a href="{% url 'delete_student' student.id %}" onclick="confirmDelete(event, this.href)">Delete</a>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td>{{ student.First_name }} {{ student.Last_name }}</td>
+            <td colspan="5">No enrollment</td>
+            <td>
+                {% if student.id %}
+                <a href="{% url 'enroll' student.id %}">
+                    <button style="background: green; color: white;">Enroll</button>
+                </a>
+                {% else %}
+                <span>Error: No ID</span>
+                {% endif %}
+            </td>
+
+            <td>
+                <span style="color: red;">Not Enrolled</span>
+            </td>
+        </tr>
+        {% endif %}
+        {% empty %}
+        <tr>
+            <td colspan="6">No students found</td>
+        </tr>
+        {% endfor %}
     </table>
 </div>
-{% if messages %}
-{% for message in messages %}
+<div class="pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-    alert("{{ message }}");
+function confirmDelete(event, url) {
+    event.preventDefault();
+
+    Swal.fire({
+        title: "Are you sure?",
+        text: "This student will be deleted permanently!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, delete it!"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = url;   
+        }
+    });
+}
 </script>
-{% endfor %}
-{% endif %}
-{% endblock content %}
+
+{% endblock %}

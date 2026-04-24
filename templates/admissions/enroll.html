@@ -1,0 +1,56 @@
+{% extends 'admissions/base.html' %}
+{% load static %}
+
+{% block title %}
+<title>Course_enroll</title>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'admissions/css/course_enroll.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <h3>Course Enrollment</h3>
+    <p>Assign course, batch & duration</p>
+
+    <h4>Enrolling: {{ student.First_name }} {{ student.Last_name }}</h4>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.non_field_errors }}
+
+        {% for field in form %}
+            <div class="form-group">
+                <label>{{ field.label }}</label>
+
+                {{ field }}
+
+                <!-- field errors -->
+                <div style="color:red;">
+                    {{ field.errors }}
+                </div>
+            </div>
+        {% endfor %}
+
+        <button type="submit">Enroll</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let dateInput = document.querySelector('input[type="date"]');
+
+    if (dateInput) {
+        let today = new Date();
+        today.setDate(today.getDate() + 1); // 👉 tomorrow
+
+        let minDate = today.toISOString().split("T")[0];
+        dateInput.setAttribute("min", minDate);
+    }
+});
+</script>
+
+{% endblock %}

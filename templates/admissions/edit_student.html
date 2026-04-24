@@ -17,10 +17,10 @@
         {% csrf_token %}
 
         <label>Name:</label>
-        <input type="text" name="name" value="{{ student.name }}" required><br><br>
+        <input type="text" name="name" value="{{ student.First_name }} {{student.Last_name}}" required><br><br>
 
         <label>Mobile No:</label>
-        <input type="text" name="mobile_no" value="{{ student.mobile_no }}" required><br><br>
+        <input type="text" name="phone_no" value="{{ student.phone_no }}" required><br><br>
 
         <label>Email:</label>
         <input type="email" name="email" value="{{ student.email }}" required><br><br>
