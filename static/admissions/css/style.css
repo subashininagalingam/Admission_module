@@ -10,13 +10,28 @@
 .logo {
     font-size: 20px;
     font-weight: bold;
+    position: relative;
+    bottom: 14px;
+}
+
+#nav{
+    position: relative;
+    right: 605px;
+    top: 17px;
+}
+
+#home{
+    position: relative;
+    left: 650px;
+    font-size: 25px;
+
 }
 
 .nav-links {
     display: flex;
     list-style: none;
     gap: 20px;
-    margin-left: 550px;
+   
     
 }
 .nav-links li a:hover{

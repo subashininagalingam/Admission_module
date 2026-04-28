@@ -12,17 +12,16 @@
 {% block content %}
 <div class="container">
 
-    <form action="{% url 'student' %}" method="post">
+    <form method="POST" action="{% url 'student' %}">
+    {% csrf_token %}
 
-        {% csrf_token %}
+    {{ student_form.as_p }}
 
-        <h3>Personal Information</h3>
-        <p>Student basic details & guardian info</p>
-        {{ form.as_p }}
+    <h3>Select Course</h3>
+    {{ admission_form.course }}
 
-
-        <button type="submit">Register</button>
-    </form>
+    <button type="submit">Register</button>
+</form>
 </div>
 {% if students %}
 <script>

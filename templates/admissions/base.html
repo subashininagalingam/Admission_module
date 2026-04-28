@@ -9,6 +9,7 @@
     <title>Student Management System</title>
     {% endblock title %}
     <link rel="stylesheet" href="{% static 'admissions/css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     {% block extra_css %}
     {% endblock %}
 </head>
@@ -18,12 +19,10 @@
         <div class="logo">CSC_CRM</div>
 
         <ul class="nav-links" id="navLinks">
-            <li><a href="{% url 'home' %}">Home</a></li>
-            <li><a href="{% url 'student' %}">Student Register</a></li>
-            <li><a href="#">Enroll</a></li>
-            <li><a href="{% url 'student_list' %}">Student List</a></li>
-            <li><a href="#">Contact</a></li>
-            <li><a href="{% url 'search_students' %}">Search&Filter</a></li>
+            <li><a href="{% url 'home' %}"><i class="fa-solid fa-house" id="home"></i></a></li>
+            <li id="nav"><a href="{% url 'student' %}">Student Register</a></li>
+            <li id="nav"><a href="{% url 'student_list' %}">Student List</a></li>
+            <li id="nav"><a href="{% url 'search_students' %}">Search&Filter</a></li>
         </ul>
 
         <div class="menu-toggle" id="menuToggle">

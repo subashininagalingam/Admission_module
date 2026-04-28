@@ -14,7 +14,7 @@ class Student(models.Model):
     gender = models.CharField(max_length=3, choices=gender_choice)
 
     email = models.EmailField()
-    address = models.TextField(max_length=1000)
+    address = models.TextField()
 
     guardian_name = models.CharField(max_length=100, blank=True, null=True)
     guardian_phone_no = models.CharField(max_length=10, blank=True, null=True)
@@ -24,42 +24,43 @@ class Student(models.Model):
 
 
 class Course(models.Model):
-    course_choice = [
-        ('Python Fullstack','Python Fullstack'),
-        ('Java Fullstack','Java Fullstack'),
-        ('Python','Python'),
-        ('Java','Java'),
-        ('AWS','AWS')
-    ]
-    course = models.CharField(max_length=20, choices=course_choice)
-    duration_choice=[
-        ('3 Months','3 Months'),
-        ('6 Months','6 Months'),
-        ('1 Year','1 Year')
-    ]
-    duration=models.CharField(max_length=10,choices=duration_choice)
-    course_fee=models.IntegerField()
-    status_choice = [
-        ('enquiry', 'Enquiry'),
-        ('confirmed', 'Confirmed'),
-        ('enrolled', 'Enrolled'),
-        ('dropped', 'Dropped'),
-    ]
-    status = models.CharField(max_length=20, choices=status_choice)
+    course = models.CharField(max_length=50)
+
+    duration = models.CharField(max_length=20)
+    course_fee = models.IntegerField()
 
     def __str__(self):
         return self.course
 
 
-class Enrollment(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='enrollments')
+class Admission(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='admissions')
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    batch_choice=[
-        ('Batch - A','Batch - A'),
-        ('Batch - B','Batch - B'),
-        ('Batch - C','Batch - C')
+
+    STATUS = [
+        ('enquiry', 'Enquiry'),
+        ('confirmed', 'Confirmed'),
+        ('enrolled', 'Enrolled'),
+        ('dropped', 'Dropped'),
     ]
-    batch=models.CharField(max_length=10,choices=batch_choice)    
+
+    status = models.CharField(max_length=20, choices=STATUS, default='enquiry')
+
+    applied_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student} - {self.course}"
+
+
+class Enrollment(models.Model):
+    admission = models.OneToOneField(Admission, on_delete=models.CASCADE, related_name='enrollment')
+
+    batch = models.CharField(max_length=10, choices=[
+        ('Batch A','Batch A'),
+        ('Batch B','Batch B'),
+        ('Batch C','Batch C')
+    ])
+
     start_date = models.DateField()
 
     payment_status = models.CharField(max_length=20, choices=[
@@ -69,4 +70,4 @@ class Enrollment(models.Model):
     ])
 
     def __str__(self):
-        return f"{self.student} - {self.course}"
+        return str(self.admission)

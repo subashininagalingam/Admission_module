@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.core.paginator import Paginator
-from .forms import StudentForm, EnrollmentForm
+from .forms import StudentForm, AdmissionForm, EnrollmentForm
 from .models import *
 from django.contrib import messages
 from openpyxl import Workbook
@@ -15,43 +15,53 @@ from datetime import date
 def home(request):
     return render(request, 'admissions/home.html')
 
+
 def student(request):
-    form = StudentForm()
+    student_form = StudentForm()
+    admission_form = AdmissionForm()
 
-    if request.method == 'POST':
-        form = StudentForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('student_list')
+    if request.method == "POST":
+        student_form = StudentForm(request.POST)
+        admission_form = AdmissionForm(request.POST)
 
-    return render(request, 'admissions/register.html', {'form': form})
+        if student_form.is_valid() and admission_form.is_valid():
+            student = student_form.save()
+            course = admission_form.cleaned_data['course']
+
+            Admission.objects.create(
+                student=student,
+                course=course,
+                status='confirmed'
+            )
+
+            return redirect('enroll',id=student.id)
+
+    return render(request, 'admissions/register.html', {
+        'student_form': student_form,
+        'admission_form': admission_form
+    })
 
 def enroll(request, id):
     student = Student.objects.get(id=id)
 
-    # ✅ Prevent multiple enrollments
-    if student.enrollments.exists():
-        messages.warning(request, "Student already enrolled!")
+    admission = Admission.objects.filter(student=student).first()
+
+    if hasattr(admission, 'enrollment'):
+        messages.warning(request, "Already enrolled!")
         return redirect('student_list')
 
-    form = EnrollmentForm(initial={'student': student})
+    form = EnrollmentForm()
 
     if request.method == 'POST':
         form = EnrollmentForm(request.POST)
-
         if form.is_valid():
             enrollment = form.save(commit=False)
-            enrollment.student = student
-
-            if enrollment.start_date <= date.today():
-                messages.error(request, "Only future dates are allowed (tomorrow onwards)!")
-                return render(request, 'admissions/enroll.html', {
-                'form': form,
-                'student': student
-            })
-
+            enrollment.admission = admission
             enrollment.save()
-            messages.success(request, "Enrollment successful!")
+
+            admission.status = 'enrolled'
+            admission.save()
+
             return redirect('student_list')
 
     return render(request, 'admissions/enroll.html', {
@@ -59,17 +69,20 @@ def enroll(request, id):
         'student': student
     })
 
-
-def success(request):
-    return render(request,"admissions/success.html")
    
 def student_list(request):
-    students = Student.objects.prefetch_related('enrollments__course').all()
 
+    students = Student.objects.prefetch_related(
+        'admissions__enrollment',
+        'admissions__course',
+    ).all()
+
+    #  FILTER
     student_filter = StudentFilter(request.GET, queryset=students)
     filtered_students = student_filter.qs.distinct()
 
-    paginator = Paginator(filtered_students, 5)  # 5 per page
+    #  PAGINATION
+    paginator = Paginator(filtered_students, 5)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -82,14 +95,16 @@ def student_list(request):
         ws.append(["Student", "Course", "Batch", "Phone", "Payment Status", "Joined"])
 
         for s in filtered_students:
-            for e in s.enrollments.all():
+            for admission in s.admissions.all():
+                enrollment = getattr(admission, 'enrollment', None)
+
                 ws.append([
                     f"{s.First_name} {s.Last_name}",
-                    str(e.course),
-                    e.batch,
+                    str(admission.course),
+                    enrollment.batch if enrollment else "-",
                     s.phone_no,
-                    e.payment_status,
-                    str(e.start_date)
+                    enrollment.payment_status if enrollment else "-",
+                    str(enrollment.start_date) if enrollment else "-"
                 ])
 
         response = HttpResponse(
@@ -107,14 +122,16 @@ def student_list(request):
         data = [["Student", "Course", "Batch", "Phone", "Payment Status", "Joined"]]
 
         for s in filtered_students:
-            for e in s.enrollments.all():
+            for admission in s.admissions.all():
+                enrollment = getattr(admission, 'enrollment', None)
+
                 data.append([
                     f"{s.First_name} {s.Last_name}",
-                    str(e.course),
-                    e.batch,
+                    str(admission.course),
+                    enrollment.batch if enrollment else "-",
                     s.phone_no,
-                    e.payment_status,
-                    str(e.start_date)
+                    enrollment.payment_status if enrollment else "-",
+                    str(enrollment.start_date) if enrollment else "-"
                 ])
 
         doc = SimpleDocTemplate(response)
@@ -151,9 +168,29 @@ def delete_student(request, id):
     return redirect('student_list')
 
 def search_students(request):
-    student_filter = StudentFilter(request.GET, queryset=Student.objects.all())
-    return render(request, "admissions/search_students.html", {'filter': student_filter})
+
+    students = Student.objects.prefetch_related(
+        'admissions__course',
+        'admissions__enrollment'
+    )
+
+    student_filter = StudentFilter(request.GET, queryset=students)
+    filtered_students = student_filter.qs.distinct()
+
+    paginator = Paginator(filtered_students, 2)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "admissions/search_students.html", {
+        'filter': student_filter,
+        'page_obj': page_obj,
+        'courses': Course.objects.all()
+    })
 
 def view_student(request, id):
-    student = Student.objects.get(id=id)
+    students = Student.objects.prefetch_related(
+        'admissions__course',
+        'admissions__enrollment'
+    )
+    student = students.get(id=id)
     return render(request, "admissions/view_student.html", {'student': student})

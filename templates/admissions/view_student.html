@@ -10,14 +10,20 @@
 
 
 {% block content %}
-    <h2>Student Details</h2>
 
-    <p><strong>Name:</strong> {{ student.name }}</p>
+    <h2>Student Details</h2>
+    {% for admission in student.admissions.all %}
+        {% with e=admission.enrollment %}
+
+    <p><strong>Name:</strong> {{ student.First_name }} {{ student.Last_name }}</p>
     <p><strong>Student ID:</strong> {{ student.id }}</p>
     <p><strong>Email:</strong> {{ student.email }}</p>
-    <p><strong>Mobile No:</strong> {{ student.mobile_no }}</p>
+    <p><strong>Mobile No:</strong> {{ student.phone_no }}</p>
     <p><strong>Date of Birth:</strong> {{ student.dob }}</p>
     <p><strong>Gender:</strong> {{ student.gender }}</p>
     <p><strong>Address:</strong> {{ student.address }}</p>  
-    <p><strong>Enrollment Date:</strong> {{ student.created_at }}</p>
+    <p><strong>Enrollment Date:</strong> {{ e.start_date }}</p>
+
+    {% endwith %}
+    {% endfor %}
 {% endblock %}

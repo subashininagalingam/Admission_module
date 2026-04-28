@@ -1,55 +1,132 @@
 {% extends 'admissions/base.html' %}
 {% load static %}
+
 {% block title %}
-    <title>Search Students</title>
+<title>Student List</title>
 {% endblock %}
+
 {% block extra_css %}
-    <link rel="stylesheet" type="text/css" href="{% static 'admissions/css/search_students.css' %}">
+<link rel="stylesheet" href="{% static 'admissions/css/search_students.css' %}">
 {% endblock %}
 
 {% block content %}
-    <h2>Search & Filter Students</h2>
 
-<form method="GET">
-    <label>Name:</label>
-    {{ filter.form.First_name }}<br><br>
-    <label>Student ID:</label>
-    {{ filter.form.id }}<br><br>
-    <label>Mobile No:</label>
-    {{ filter.form.mobile_no }}<br><br>
-    <label>Email:</label>
-    {{ filter.form.email }}<br><br>
-    <button type="submit">Apply Filter</button>
+<div class="container">
+
+    <h3>Advanced Search & Filter</h3>
+
+    <form method="GET" class="top-bar">
+
+    <div class="filter-grid">
+
+    <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search">
+
+    <input type="text" name="id" value="{{ request.GET.id }}" placeholder="ID">
+
+    <input type="text" name="phone_no" value="{{ request.GET.phone_no }}" placeholder="Phone">
+
+    <select name="course">
+        <option value="">All Course</option>
+        {% for c in courses %}
+        <option value="{{ c.course }}" {% if request.GET.course == c.course %}selected{% endif %}>
+            {{ c.course }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <select name="batch">
+        <option value="">All Batch</option>
+        <option value="Batch A" {% if request.GET.batch == "Batch A" %}selected{% endif %}>Batch A</option>
+        <option value="Batch B" {% if request.GET.batch == "Batch B" %}selected{% endif %}>Batch B</option>
+        <option value="Batch C" {% if request.GET.batch == "Batch C" %}selected{% endif %}>Batch C</option>
+    </select>
+
+    <select name="status">
+        <option value="">All Status</option>
+        <option value="Enquiry" {% if request.GET.status == "Enquiry" %}selected{% endif %}>Enquiry</option>
+        <option value="Confirmed" {% if request.GET.status == "Confirmed" %}selected{% endif %}>Confirmed</option>
+        <option value="Enrolled" {% if request.GET.status == "Enrolled" %}selected{% endif %}>Enrolled</option>
+        <option value="Dropped" {% if request.GET.status == "Dropped" %}selected{% endif %}>Dropped</option>
+    </select>
+
+    <select name="payment_status">
+        <option value="">Payment</option>
+        <option value="Paid" {% if request.GET.payment_status == "Paid" %}selected{% endif %}>Paid</option>
+        <option value="Partial" {% if request.GET.payment_status == "Partial" %}selected{% endif %}>Partial</option>
+        <option value="Pending" {% if request.GET.payment_status == "Pending" %}selected{% endif %}>Pending</option>
+    </select>
+
+    </div>
+
+    <div class="form-btn">
+    <a href="{% url 'search_students' %}">
+    <button type="button">Reset</button>
+    </a>
+    <button type="submit">Filter</button>
+    </div>
+
 </form>
 
-<hr>
+<div class="pagination-info">
+        Showing {{ page_obj.paginator.count }} results matching your filters
+    </div>
 
 <table>
 <tr>
-    <th>Name</th>
-    <th>Student ID</th>
-    <th>Mobile No</th>
-    <th>Email</th>
+    <th>Student</th>
+    <th>Course</th>
+    <th>Status</th>
+    <th>Fee</th>
+    <th>Joined</th>
     <th>Actions</th>
 </tr>
 
-{% for s in filter.qs %}
-<tr>
-    <td>{{ s.name }}</td>
-    <td>{{ s.id }}</td>
-    <td>{{ s.mobile_no }}</td>
-    <td>{{ s.email }}</td>
-    <td>
+{% for student in page_obj %}
+    {% for admission in student.admissions.all %}
+        {% with e=admission.enrollment %}
+        <tr>
+            <td>{{ student.First_name }} {{ student.Last_name }}</td>
+
+            <td>{{ admission.course }}</td>
+
+            <td>
+                <span class="badge {{ admission.status|lower }}">
+                    {{ admission.status|title }}
+                </span>
+
+            <td>
+                {% if e %}
+                <span class="badge {{ e.payment_status|lower }}">
+                    {{ e.payment_status }}
+                </span>
+                {% else %}
+                -
+                {% endif %}
+            </td>
+
         
-       <button><a href="{% url 'view_student' s.id %}">View</a></button>
-        
-    </td>
-</tr>
+            <td>
+                {% if e %}
+                <span >
+                    {{ e.start_date }}
+                </span>
+                {% else %}
+                -
+                {% endif %}
+            </td>
+
+            <td>
+                <button><a href="{% url 'view_student' student.id %}">View</a></button>
+            </td>
+        </tr>
+        {% endwith %}
+    {% endfor %}
 {% empty %}
 <tr>
-    <td>No data found</td>
+    <td colspan="5">No students found</td>
 </tr>
 {% endfor %}
 </table>
+
 
 {% endblock %}

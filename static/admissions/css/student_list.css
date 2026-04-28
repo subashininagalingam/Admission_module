@@ -1,6 +1,6 @@
 body{
     position: relative;
-    top: 50px;
+    top: 90px;
 }
 
 .container {
@@ -20,6 +20,8 @@ select {
     padding: 8px;
 }
 
+
+
 button {
     background: #152347;
     color: white;
@@ -27,10 +29,36 @@ button {
     border: none;
     border-radius: 6px;
 }
-.btn1{
-    position: relative;
-    top: 10px;
+
+.dropdown-content{
+    display: flex;
 }
+
+#btn1{
+    display: flex;
+    align-items: end;
+    justify-content: flex-end;
+    gap: 5px;
+    position: relative;
+    top: 5px;
+}
+
+.btn2{
+    position: relative;
+    bottom: 20px;
+}
+
+#filter:hover,
+#btn2:hover{
+    background-color: #FFC107;
+    color: #152347;
+    box-shadow: 0px 4px 10px #FFC107;
+}
+
+a{
+    text-decoration: none;
+}
+
 
 table {
     width: 100%;
@@ -71,6 +99,34 @@ th,td {
     color: orange;
 }
 
+.badge {
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.badge.enrolled {
+    background-color: #d4f5e9;
+    color: #1ca97c;
+}
+
+.badge.confirmed {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.badge.enquiry {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.badge.dropped {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
 .dropdown {
     position: relative;
 }
@@ -107,11 +163,45 @@ th,td {
     display: block;
 }
 
-.pagination{
-    position: relative;
-    top: 25px;
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding: 10px 5px;
 }
 
+/* Left text */
+.pagination-info {
+    font-size: 14px;
+    color: #555;
+}
+
+/* Right buttons */
+.pagination-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Prev button */
+.btn.prev {
+    background-color: #f3f4f6;
+    color: #333;
+}
+
+/* Next button */
+.btn.next {
+    background-color: #2563eb;
+    color: white;
+}
 @media(max-width: 550px) {
     body {
         background-color: white;
