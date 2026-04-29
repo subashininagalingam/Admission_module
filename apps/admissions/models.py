@@ -1,10 +1,29 @@
 from django.db import models
+from django.core.validators import RegexValidator
+
+
+name_validator = RegexValidator(
+    regex=r'^[A-Za-z ]+$',
+    message="Only alphabets and spaces are allowed."
+)
+
+phone_validator = RegexValidator(
+    regex=r'^\d{10}$',
+    message="Phone number must be exactly 10 digits."
+)
+
+email_validator = RegexValidator(
+    regex=r'^[\w\.-]+@[\w\.-]+\.\w+$',
+    message="Enter a proper email (example: name@gmail.com)"
+)
+
+
 
 class Student(models.Model):
-    First_name = models.CharField(max_length=20, blank=True, null=True)
-    Last_name = models.CharField(max_length=20, blank=True, null=True)
+    First_name = models.CharField(max_length=20, blank=False, validators=[name_validator])
+    Last_name = models.CharField(max_length=20, blank=False, validators=[name_validator])
     dob = models.DateField()
-    phone_no = models.CharField(max_length=10, blank=True, null=True)
+    phone_no = models.CharField(max_length=10, blank=False, validators=[phone_validator])
 
     gender_choice = [
         ('M','Male'),
@@ -13,11 +32,11 @@ class Student(models.Model):
     ]
     gender = models.CharField(max_length=3, choices=gender_choice)
 
-    email = models.EmailField()
+    email = models.EmailField(validators=[email_validator])
     address = models.TextField()
 
-    guardian_name = models.CharField(max_length=100, blank=True, null=True)
-    guardian_phone_no = models.CharField(max_length=10, blank=True, null=True)
+    guardian_name = models.CharField(max_length=100, blank=False, validators=[name_validator])
+    guardian_phone_no = models.CharField(max_length=10, blank=False, validators=[phone_validator])
 
     def __str__(self):
         return f"{self.First_name} {self.Last_name}"

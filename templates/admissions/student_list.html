@@ -35,13 +35,13 @@
             <option value="Batch B" {% if request.GET.batch == "Batch B" %}selected{% endif %}>Batch B</option>
             <option value="Batch C" {% if request.GET.batch == "Batch C" %}selected{% endif %}>Batch C</option>
         </select>
-        
-    <a href="{% url 'student_list' %}">
-    <button type="button" id="btn2">Reset</button>
-    </a>
-    <a href="#">
-        <button type="submit" id="filter">Filter</button>
-    </a>   
+
+        <a href="{% url 'student_list' %}">
+            <button type="button" id="btn2">Reset</button>
+        </a>
+        <a href="#">
+            <button type="submit" id="filter">Search</button>
+        </a>
     </form>
 
     Total Students: {{ total_students }}
@@ -49,18 +49,19 @@
     <!-- DOWNLOAD -->
     <div class="table-container">
         <form method="GET">
-        <div id="btn1">
-            <select name="format">
-                <option value="">Select format</option>
-                <option value="excel">Download Excel</option>
-                <option value="pdf">Download PDF</option>
-            </select>
-        <button type="submit" id="btn2" >Download</button></div>
+            <div id="btn1">
+                <select name="format">
+                    <option value="">Select format</option>
+                    <option value="excel">Download Excel</option>
+                    <option value="pdf">Download PDF</option>
+                </select>
+                <button type="submit" id="btn2">Download</button>
+            </div>
 
         </form>
 
         <a href="{% url 'student' %}">
-            <button id="btn2" class="btn2" >+ Add new Student</button>
+            <button id="btn2" class="btn2">+ Add new Student</button>
         </a>
     </div>
 
@@ -108,14 +109,14 @@
 
             <!-- STATUS -->
             <td>
-            <span class="badge {{ admission.status|lower }}">
-                {{ admission.status|title }}
-            </span>
+                <span class="badge {{ admission.status|lower }}">
+                    {{ admission.status|title }}
+                </span>
             </td>
 
             <td>
                 {% if e %}
-                <span >
+                <span>
                     {{ e.start_date }}
                 </span>
                 {% else %}
@@ -125,7 +126,7 @@
 
             <!-- ACTION -->
             <td class="dropdown">
-                <button class="dots">⋮</button>
+                <button class="dots" onclick="toggleDropdown(this)">⋮</button>
 
                 <div class="dropdown-content">
                     <a href="{% url 'edit_student' student.id %}">Edit</a>
@@ -158,11 +159,11 @@
     <!-- RIGHT BUTTONS -->
     <div class="pagination-buttons">
         {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}" class="btn prev">Prev</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="btn prev">Prev</a>
         {% endif %}
 
         {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}" class="btn next">Next </a>
+        <a href="?page={{ page_obj.next_page_number }}" class="btn next">Next </a>
         {% endif %}
     </div>
 
@@ -189,6 +190,22 @@
             }
         });
     }
+</script>
+
+<script id="jss8gk">
+function toggleDropdown(button) {
+    let dropdown = button.nextElementSibling;
+    dropdown.classList.toggle("show");
+}
+
+// optional: outside click close
+document.addEventListener("click", function(e) {
+    if (!e.target.matches('.dots')) {
+        document.querySelectorAll(".dropdown-content").forEach(d => {
+            d.classList.remove("show");
+        });
+    }
+});
 </script>
 
 {% endblock %}

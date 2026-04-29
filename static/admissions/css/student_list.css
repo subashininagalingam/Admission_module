@@ -28,6 +28,7 @@ button {
     padding: 8px 15px;
     border: none;
     border-radius: 6px;
+    cursor: pointer;
 }
 
 .dropdown-content{
@@ -155,11 +156,12 @@ th,td {
     color: black;
 }
 
-.dropdown-content a:hover {
-    background: #f1f1f1;
+
+.dropdown-content {
+    display: none;
 }
 
-.dropdown:hover .dropdown-content {
+.dropdown-content.show {
     display: block;
 }
 
