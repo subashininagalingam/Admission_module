@@ -1,3 +1,5 @@
+from urllib import request
+
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.core.paginator import Paginator
@@ -148,15 +150,19 @@ def student_list(request):
     })
 
 def edit_student(request, id):
-    student=Student.objects.get(id=id)
-    if (request.method=='POST'):
-        student.name=request.POST.get('name')
-        student.mobile_no=request.POST.get('mobile_no')
-        student.email=request.POST.get('email') 
-        student.dob=request.POST.get('dob')
-        student.address=request.POST.get('address')
+    student = Student.objects.get(id=id)
+
+    if request.method == 'POST':
+        student.First_name = request.POST.get('First_name')
+        student.Last_name = request.POST.get('Last_name')
+        student.phone_no = request.POST.get('phone_no')
+        student.email = request.POST.get('email')
+        student.dob = request.POST.get('dob')
+        student.address = request.POST.get('address')
+
         student.save()
         return redirect('student_list')
+
     return render(request, "admissions/edit_student.html", {'student': student})
 
         

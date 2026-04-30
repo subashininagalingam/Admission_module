@@ -19,11 +19,11 @@
 
     <div class="filter-grid">
 
-    <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search">
+    <input type="text" name="search" pattern="^[A-Za-z ]+$" value="{{ request.GET.search }}" placeholder="Search">
 
-    <input type="text" name="id" value="{{ request.GET.id }}" placeholder="ID">
+    <input type="text" name="id" pattern="^\d{1,5}$" value="{{ request.GET.id }}" placeholder="ID">
 
-    <input type="text" name="phone_no" maxlength="10" pattern="\d{10}" value="{{ request.GET.phone_no }}" placeholder="Phone">
+    <input type="text" name="phone_no" maxlength="10" pattern="^\d{10}$" value="{{ request.GET.phone_no }}" placeholder="Phone">
 
     <select name="course">
         <option value="">All Course</option>

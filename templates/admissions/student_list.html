@@ -16,9 +16,9 @@
     <!-- FILTER FORM -->
     <form method="GET" class="top-bar">
 
-        <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search name">
+        <input type="text" name="search" pattern="^[A-Za-z ]+$" value="{{ request.GET.search }}" placeholder="Search name">
 
-        <input type="text" name="id" value="{{ request.GET.id }}" placeholder="Search ID">
+        <input type="text" name="id" pattern="^\d{1,5}$" value="{{ request.GET.id }}" placeholder="Search ID">
 
         <select name="course">
             <option value="">All Course</option>
@@ -192,7 +192,7 @@
     }
 </script>
 
-<script id="jss8gk">
+<script>
 function toggleDropdown(button) {
     let dropdown = button.nextElementSibling;
     dropdown.classList.toggle("show");
