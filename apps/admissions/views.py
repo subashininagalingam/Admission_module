@@ -1,15 +1,14 @@
-from urllib import request
-
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.core.paginator import Paginator
-from .forms import StudentForm, AdmissionForm, EnrollmentForm
+from .forms import StudentForm, AdmissionForm, EnrollmentForm 
 from .models import *
 from django.contrib import messages
 from openpyxl import Workbook
 from reportlab.platypus import SimpleDocTemplate, Table
 from .filters import StudentFilter
 from datetime import date
+from django.db import transaction
 
 
 # Create your views here.
@@ -21,57 +20,45 @@ def home(request):
 def student(request):
     student_form = StudentForm()
     admission_form = AdmissionForm()
+    enrollment_form = EnrollmentForm()
+
+    courses = Course.objects.all()
 
     if request.method == "POST":
-        student_form = StudentForm(request.POST)
+        student_form = StudentForm(request.POST, request.FILES)
         admission_form = AdmissionForm(request.POST)
+        enrollment_form = EnrollmentForm(request.POST, request.FILES)
 
-        if student_form.is_valid() and admission_form.is_valid():
-            student = student_form.save()
-            course = admission_form.cleaned_data['course']
+        if (student_form.is_valid() and 
+            admission_form.is_valid() and 
+            enrollment_form.is_valid()):
 
-            Admission.objects.create(
-                student=student,
-                course=course,
-                status='confirmed'
-            )
+            with transaction.atomic():
+                student = student_form.save()
 
-            return redirect('enroll',id=student.id)
+                admission = Admission.objects.create(
+                    student=student,
+                    course=admission_form.cleaned_data['course'],
+                    status=admission_form.cleaned_data['status']
+                )
+
+                enrollment = enrollment_form.save(commit=False)
+                enrollment.admission = admission
+                enrollment.save()
+
+            messages.success(request, "Student enrolled successfully!")
+            return redirect('student_list')
+        
+        else:
+            messages.error(request, "Form has errors. Please check!")
 
     return render(request, 'admissions/register.html', {
         'student_form': student_form,
-        'admission_form': admission_form
+        'admission_form': admission_form,
+        'enrollment_form': enrollment_form,
+        'courses': courses,
     })
 
-def enroll(request, id):
-    student = Student.objects.get(id=id)
-
-    admission = Admission.objects.filter(student=student).first()
-
-    if hasattr(admission, 'enrollment'):
-        messages.warning(request, "Already enrolled!")
-        return redirect('student_list')
-
-    form = EnrollmentForm()
-
-    if request.method == 'POST':
-        form = EnrollmentForm(request.POST)
-        if form.is_valid():
-            enrollment = form.save(commit=False)
-            enrollment.admission = admission
-            enrollment.save()
-
-            admission.status = 'enrolled'
-            admission.save()
-
-            return redirect('student_list')
-
-    return render(request, 'admissions/enroll.html', {
-        'form': form,
-        'student': student
-    })
-
-   
 def student_list(request):
 
     students = Student.objects.prefetch_related(
@@ -81,7 +68,7 @@ def student_list(request):
 
     #  FILTER
     student_filter = StudentFilter(request.GET, queryset=students)
-    filtered_students = student_filter.qs.distinct()
+    filtered_students = student_filter.qs.distinct().order_by('-id')
 
     #  PAGINATION
     paginator = Paginator(filtered_students, 5)
@@ -193,10 +180,18 @@ def search_students(request):
         'courses': Course.objects.all()
     })
 
+    
 def view_student(request, id):
-    students = Student.objects.prefetch_related(
+    student = Student.objects.prefetch_related(
         'admissions__course',
         'admissions__enrollment'
-    )
-    student = students.get(id=id)
-    return render(request, "admissions/view_student.html", {'student': student})
+    ).get(id=id)
+
+    admission = student.admissions.first()   # get latest/first admission
+    enrollment = admission.enrollment if admission else None
+
+    return render(request, "admissions/view_student.html", {
+        'student': student,
+        'admission': admission,
+        'enrollment': enrollment
+    })

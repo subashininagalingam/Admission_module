@@ -37,16 +37,20 @@ class Student(models.Model):
 
     guardian_name = models.CharField(max_length=100, blank=False, validators=[name_validator])
     guardian_phone_no = models.CharField(max_length=10, blank=False, validators=[phone_validator])
+    
+    photo=models.ImageField(upload_to='student_photos/', null=False, blank=False)
+    id_proof=models.FileField(upload_to='id_proofs/', null=False, blank=False)
+    certificate=models.FileField(upload_to='certificates/', null=False, blank=False)
 
     def __str__(self):
         return f"{self.First_name} {self.Last_name}"
 
 
 class Course(models.Model):
-    course = models.CharField(max_length=50)
+    course = models.CharField(max_length=50, null=False, blank=False)
 
-    duration = models.CharField(max_length=20)
-    course_fee = models.IntegerField()
+    duration = models.CharField(max_length=20 ,null=False, blank=False)
+    course_fee = models.IntegerField(null=False, blank=False)
 
     def __str__(self):
         return self.course
@@ -80,13 +84,13 @@ class Enrollment(models.Model):
         ('Batch C','Batch C')
     ])
 
-    start_date = models.DateField()
+    start_date = models.DateField(null=False, blank=False)
 
     payment_status = models.CharField(max_length=20, choices=[
         ('Paid', 'Paid'),
         ('Pending', 'Pending'),
         ('Partial','Partial')
-    ])
+    ], default='Pending')
 
     def __str__(self):
         return str(self.admission)

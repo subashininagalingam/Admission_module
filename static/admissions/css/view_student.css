@@ -1,7 +1,243 @@
-body{
-  
+body {
     position: relative;
-    top: 50px;
+    top: 80px;
+}
+
+.container {
+    width: 90%;
+    margin: auto;
+}
+
+button {
+    background: #152347;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover{
+    background-color: #FFC107;
+    color: #152347;
+    box-shadow: 0px 4px 10px #FFC107;
+}
+
+/* Cards */
+.card {
+    background: white;
+    padding: 20px;
+    margin-top: 15px;
+    border-radius: 10px;
+    text-align: left;
+}
+
+/* User Layout */
+.user-card {
+    display: flex;
+    justify-content: space-between;
+}
+.enquiry{
+    color:#d97706 ;
+    background-color: #fef3c7;
+    font-family:12px ;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.confirmed {
+    color:#2563eb;
+    background-color: #dbeafe;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.enrolled {
+    color: green;
+    background-color: #d4f5e9;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.dropped {
+    color: red;
+    background-color: #fee2e2;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+
+.line{
+    width: 1px;
+    height: 200px;
+    background-color: gray;
+    position: relative;
+    top: 15px;
+}
+
+.user-right{
+    width: 200px;
+    border: 1px solid gray;
+    padding: 0 20px;
+    margin-right:200px ;
+    position: relative;
+    left: 200px;
+}
+
+.user-left,
+.user-middle,
+.user-right i{
+    color: #152347;
+}
+
+.notes i{
+    color:#d97706 ;
+}
+
+/* Stats */
+.stats {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.box {
+    flex: 1;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+.text{
+    position: relative;
+    top: 10px;
+    left: 20px;
+}
+
+.total { background: #eef; color:#152347; }
+.paid { background: #e0f7e9; color: green; }
+.pending { background: #ffe5e5; color: red; }
+.trans { background: #eef3ff;color: #2563eb; }
+
+.total,.paid,.pending,.trans{
+    display: flex;
+}
+
+.fees-icon1{
+    width: 50px;
+    height: 50px;
+    font-size:25px ;
+    position: relative;
+    background: rgb(189, 189, 218);
+    border-radius: 50%;
+    align-content: center;
+}
+.fees-icon2{
+    width: 50px;
+    height: 50px;
+    font-size:25px ;
+    position: relative;
+    background: #b8d8c4;
+    border-radius: 50%;
+    align-content: center;
+}
+.fees-icon3{
+    width: 50px;
+    height: 50px;
+    font-size:25px ;
+    position: relative;
+    background: #dab8b8;
+    border-radius: 50%;
+    align-content: center;
+}
+.fees-icon4{
+    width: 50px;
+    height: 50px;
+    font-size:25px ;
+    position: relative;
+    background: #b0bcd6;
+    border-radius: 50%;
+    align-content: center;
+}
+
+
+
+/* Table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.success {
+    color: green;
+}
+
+/* Bottom */
+.bottom {
+    display: flex;
+    gap: 15px;
+}
+
+.notes {
+    flex: 1;
+    border: 1px solid gray;
+    padding: 5px 10px ;
+}
+.notes-list{
+    padding: 10px;
+    background: #fff7d6;
+    border-radius: 10px;
+    position: relative;
+    bottom: 17px;
+}
+
+
+.docs {
+    flex: 2;
+    border: 1px solid gray;
+    padding: 0 15px;
+    border-radius: 10px;
+}
+
+.doc-list {
+    display: flex;
+    gap: 10px;
+}
+
+.docs i{
+    color:#2563eb ;
+}
+
+.doc-list i{
+    color: red;
+}
+a{
+    text-decoration: none;
+    color: black;
+}
+
+.proof{
+    display: flex;
+    border: 1px solid gray;
+    padding: 10px;
+    border-radius: 10px;
+}
+.icon{
+    background-color: #ffe5e5;
+}
+
+.icon i{
+    font-size:25px ;
+    position: relative;
+    top: 5px;
 }
 @media(max-width:550px){
     h2{

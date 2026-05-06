@@ -1,29 +1,187 @@
 {% extends 'admissions/base.html' %}
 {% load static %}
 {% block title %}
-    <title>View Student</title>
+<title>View Student</title>
 {% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" type="text/css" href="{% static 'admissions/css/view_student.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'admissions/css/view_student.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+    integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
 {% endblock %}
 
 
 {% block content %}
+<div class="container">
 
-    <h2>Student Details</h2>
-    {% for admission in student.admissions.all %}
-        {% with e=admission.enrollment %}
+    <a href="{% url 'student_list' %}" class="link"><button>Back</button></a>
 
-    <p><strong>Name:</strong> {{ student.First_name }} {{ student.Last_name }}</p>
-    <p><strong>Student ID:</strong> {{ student.id }}</p>
-    <p><strong>Email:</strong> {{ student.email }}</p>
-    <p><strong>Mobile No:</strong> {{ student.phone_no }}</p>
-    <p><strong>Date of Birth:</strong> {{ student.dob }}</p>
-    <p><strong>Gender:</strong> {{ student.gender }}</p>
-    <p><strong>Address:</strong> {{ student.address }}</p>  
-    <p><strong>Enrollment Date:</strong> {{ e.start_date }}</p>
+    <!-- User Card -->
+    <div class="card user-card">
+        <div class="user">
+            {% if student.photo %}
+            <img src="{{ student.photo.url }}"
+                style="width:200px; height:200px; border-radius:50%; object-fit:cover; margin-bottom:15px;">
+            {% else %}
+            <span>{{ student.name|first }}</span>
+            {% endif %}
+        </div>
+        <div class="user-left">
+            <h3>
+                {{ student.First_name }} {{ student.Last_name }}
 
-    {% endwith %}
-    {% endfor %}
+                {% if admission.status|lower == "enquiry" %}
+                <span class="enquiry">Enquiry</span>
+                {% elif admission.status|lower == "confirmed" %}
+                <span class="confirmed">Confirmed</span>
+                {% elif admission.status|lower == "enrolled" %}
+                <span class="enrolled">Enrolled</span>
+                {% elif admission.status|lower == "dropped" %}
+                <span class="dropped">Dropped</span>
+                {% else %}
+                <span class="unknown">Unknown</span>
+                {% endif %}
+            </h3>
+            <p><i class="fa-regular fa-envelope"></i> Email: {{ student.email }}</p>
+            <p><i class="fa-solid fa-phone"></i> Phone: {{ student.phone_no }}</p>
+            <p><i class="fa-solid fa-graduation-cap"></i> Course: {{ admission.course }}</p>
+            <p><i class="fa-regular fa-id-badge"></i> Student ID: {{ student.id }}</p>
+        </div>
+
+        <div class="line"></div>
+
+        <div class="user-middle">
+            <p><i class="fa-regular fa-calendar"></i> Date of Birth: {{ student.dob }}</p>
+            <p><i class="fa-solid fa-user"></i> Gender: {{ student.gender }}</p>
+            <p><i class="fa-regular fa-calendar"></i> Admission Date: {{ enrollment.start_date }}</p>
+            <p><i class="fa-solid fa-users"></i> Batch: {{ enrollment.batch }}</p>
+            <p><i class="fa-regular fa-circle"></i> Status: {{ admission.status }}</p>
+        </div>
+
+
+        <div class="user-right">
+            <h4><i class="fa-solid fa-location-dot"></i>Address</h4>
+            <p>{{ student.address }}</p>
+
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="box total">
+            <div class="fees-icon1" id="icon"><i class="fa-solid fa-wallet"></i></div>
+           <div class="text"><span>Total Fee</span><br>₹10,000</div>
+        </div>
+        <div class="box paid">
+            <div class="fees-icon2" id="icon"><i class="fa-regular fa-circle-check"></i></div>
+            <div class="text"><span>Paid</span><br>₹10,000</div>
+        </div>
+        <div class="box pending">
+            <div class="fees-icon3" id="icon"><i class="fa-solid fa-clock"></i></div>
+            <div class="text"><span>Pending</span><br>₹10,000</div>
+        </div>
+        <div class="box trans">
+            <div class="fees-icon4" id="icon"><i class="fas fa-file-alt icon-blue"></i></div>
+            <div class="text"><span>Transactions</span><br>1</div>
+        </div>
+    </div>
+
+    <!-- Payment Table -->
+    <div class="card">
+        <h3>Payment History</h3>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Amount</th>
+                <th>Mode</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+            <tr>
+                <td>{{ student.payment_id }}</td>
+                <td>₹10,000</td>
+                <td>UPI</td>
+                <td>Jan 01, 2026</td>
+                <td><span class="success">Success</span></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Notes + Documents -->
+    <div class="bottom">
+        <div class="card notes">
+            <h4><i class="fas fa-file-alt icon-blue"></i> Notes</h4>
+            <div class="notes-list">
+            <p>Good performance.<br> Needs improvement in assignment and consistency.</p>
+            </div>
+        </div>
+
+        <div class="card docs">
+            <h4><i class="fa-solid fa-folder-open"></i> Documents</h4>
+            <div class="doc-list">
+
+                <!-- ID Proof -->
+                <div class="proof">
+                    <div class="icon">
+                    <i class="fa-regular fa-file-pdf"></i>
+                    </div>
+                    <div>
+                        {% if student.id_proof %}
+                        <a href="{{ student.id_proof.url }}" target="_blank">ID Proof<br>Aadhar Card</a>
+                        {% else %}
+                        <span>No File</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Address Proof (you mapped as certificate maybe) -->
+                <div class="proof">
+                    <div class="icon">
+                    <i class="fa-regular fa-file-pdf"></i>
+                    </div>
+                    <div>
+                        {% if student.certificate %}
+                        <a href="{{ student.certificate.url }}" target="_blank">Address Proof<br>Electricity Bill</a>
+                        {% else %}
+                        <span>No File</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Photo -->
+                <div class="proof">
+                    <div class="icon">
+                    <i class="fa-regular fa-file-pdf"></i>
+                    </div>
+                    <div>
+                        {% if student.photo %}
+                        <a href="{{ student.photo.url }}" target="_blank">Photo<br>Passport Size</a>
+                        {% else %}
+                        <span>No Photo</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Admission Form (if not in model yet) -->
+                <div class="proof">
+                    <div class="icon">
+                    <i class="fa-regular fa-file-pdf"></i>
+                    </div>
+                    <div>
+                        {% if student.admission_form %} {# Assuming you have an admission_form field #}
+                        <a href="{{ student.admission_form.url }}" target="_blank">Admission Form<br>admission_form.pdf</a>
+                        {% else %}
+                        <span>Not Uploaded</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
 {% endblock %}

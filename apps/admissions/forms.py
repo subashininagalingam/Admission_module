@@ -3,15 +3,79 @@ from .models import *
 from datetime import date
 
 class StudentForm(forms.ModelForm):
-    dob = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
 
     class Meta:
         model = Student
         fields = '__all__'
 
+        widgets = {
+            'First_name': forms.TextInput(attrs={'placeholder': 'Enter first name', 'required': True}),
+            'Last_name': forms.TextInput(attrs={'placeholder': 'Enter last name', 'required': True}),
+            'email': forms.EmailInput(attrs={'placeholder': 'Enter email', 'required': True}),
+            'phone_no': forms.TextInput(attrs={'placeholder': 'Enter phone number', 'required': True}),
+            'dob': forms.DateInput(attrs={'type': 'date', 'required': True}),
+            'guardian_name': forms.TextInput(attrs={'placeholder': 'Enter guardian name', 'required': True}),
+            'guardian_phone_no': forms.TextInput(attrs={'placeholder': 'Enter guardian phone', 'required': True}),
+            'address': forms.Textarea(attrs={'placeholder': 'Enter address', 'rows': 2, 'cols': 30, 'style': 'font-size:14px; padding:5px;', 'required': True}),
+            'photo': forms.FileInput(attrs={'required': True}),
+            'id_proof': forms.FileInput(attrs={'required': True}),
+            'certificate': forms.FileInput(attrs={'required': True}),
 
-class AdmissionForm(forms.Form):
-    course = forms.ModelChoiceField(queryset=Course.objects.all())
+        }
+    
+    def clean_First_name(self):
+        value = self.cleaned_data.get('First_name')
+
+        if not value.replace(" ", "").isalpha():
+            raise forms.ValidationError("Only letters allowed")
+
+        return value
+    
+    def clean_Last_name(self):
+        value = self.cleaned_data.get('Last_name')
+
+        if not value.replace(" ", "").isalpha():
+            raise forms.ValidationError("Only letters allowed (no numbers/symbols)")
+
+        return value
+    
+
+
+
+    def clean_phone_no(self):
+        phone = self.cleaned_data.get('phone_no')
+
+        if not phone.isdigit():
+            raise forms.ValidationError("Only numbers allowed")
+
+        if len(phone) != 10:
+            raise forms.ValidationError("Must be 10 digits")
+
+        return phone
+
+class CourseForm(forms.ModelForm):
+    class Meta:
+        model = Course
+        fields = '__all__'
+        widgets = {
+            'course': forms.TextInput(attrs={'placeholder': 'Enter course name', 'required': True}),
+            'duration': forms.TextInput(attrs={'placeholder': 'Enter course duration', 'required': True}),      
+            'course_fee': forms.NumberInput(attrs={'placeholder': 'Enter course fee', 'required': True}),
+        }
+
+
+class AdmissionForm(forms.ModelForm):
+    class Meta:
+        model = Admission
+        fields = ['course', 'status']
+        widgets = {
+            'status': forms.RadioSelect()
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['course'].empty_label = "Select Course"
+
 
 
 class EnrollmentForm(forms.ModelForm):

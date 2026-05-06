@@ -75,6 +75,7 @@
             <th>Fee Status </th>
             <th>Admission Status</th>
             <th>Joined</th>
+            <th>Profile</th>
             <th>Action</th>
             <th></th>
         </tr>
@@ -122,6 +123,10 @@
                 {% else %}
                 -
                 {% endif %}
+            </td>
+
+            <td>
+                <a href="{% url 'view_student' student.id %}">View</a>
             </td>
 
             <!-- ACTION -->
