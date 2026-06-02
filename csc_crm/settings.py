@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'apps.admissions',
+    'apps.Student_attendance_management.apps.StudentAttendanceManagementConfig',
 ]
 
 MIDDLEWARE = [

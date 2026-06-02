@@ -5,6 +5,8 @@ from django.db.models import Sum
 from django.core.validators import MinValueValidator 
 from decimal import Decimal
 from cloudinary.models import CloudinaryField
+# from apps.Student_attendance_management.models import Batch
+
 
 
 name_validator = RegexValidator(
@@ -136,12 +138,11 @@ class Admission(models.Model):
 class Enrollment(models.Model):
     admission = models.OneToOneField(Admission, on_delete=models.CASCADE, related_name='enrollment')
 
-    batch = models.CharField(max_length=10, choices=[
-        ('', 'Select Batch'),
-        ('Batch A','Batch A'),
-        ('Batch B','Batch B'),
-        ('Batch C','Batch C')
-    ])
+    batch = models.ForeignKey(
+    'student_attendance_management.Batch',
+    on_delete=models.CASCADE,
+    related_name='enrollments'
+    )
 
     start_date = models.DateField(null=False, blank=False)
 
@@ -151,5 +152,16 @@ class Enrollment(models.Model):
         ('Partial','Partial')
     ], default='Pending')
 
+    @property
+    def student(self):
+
+        return self.admission.student
+
+    @property
+    def course(self):
+
+        return self.admission.course
+
     def __str__(self):
+
         return str(self.admission)

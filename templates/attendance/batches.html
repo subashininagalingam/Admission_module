@@ -1,0 +1,503 @@
+{% extends 'attendance/base.html' %}
+{% load static %}
+
+{% block title %}
+<title>Student Attendance - Batches</title>
+{% endblock title %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #070b17;
+        color: white;
+        font-family: Segoe UI;
+        zoom: 90%;
+        padding-left: 10px;
+    }
+
+    .main-content {
+        margin-left: 250px;
+        padding: 15px 25px;
+        zoom: 0.9;
+        /* optional */
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .top-card {
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 20px;
+    }
+
+    /* Icon Box */
+    .icon-box {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        font-size: 18px;
+    }
+
+    /* Total Batches */
+    .icon-batches {
+        background: #172554;
+        color: #60a5fa;
+    }
+
+    /* Attendance Marked */
+    .icon-marked {
+        background: #052e16;
+        color: #22c55e;
+    }
+
+    /* Not Marked */
+    .icon-notmarked {
+        background: #450a0a;
+        color: #ef4444;
+    }
+
+    /* Total Students */
+    .icon-students {
+        background: #451a03;
+        color: #f59e0b;
+    }
+
+    .top-card p {
+        color: #64748b;
+        margin-bottom: 4px;
+    }
+
+    .top-card h2 {
+        color: white;
+        font-size: 42px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .batch-card {
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 18px;
+        margin-top: 25px;
+        transition: 0.3s;
+    }
+
+    .batch-card:hover {
+        transform: translateY(-4px);
+        border-color: #2563eb;
+    }
+
+    .status {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .marked {
+        background: #123d2b;
+        color: #22c55e;
+    }
+
+    .not-marked {
+        background: #3b1d1d;
+        color: #ef4444;
+    }
+
+    .btn-attendance {
+        width: 100%;
+        background: #2563eb;
+        border: none;
+        padding: 12px;
+        border-radius: 12px;
+        color: white;
+        font-weight: 600;
+        margin-top: 20px;
+    }
+
+    .btn-attendance:hover {
+        background: #1d4ed8;
+    }
+
+    .marked {
+        background: #123d2b;
+        color: #22c55e;
+    }
+
+    .not-marked {
+        background: #4a2a05;
+        color: #f59e0b;
+    }
+
+    .attendance-modal {
+        background: #111827;
+        border: 1px solid #334155;
+        border-radius: 20px;
+        color: white;
+    }
+
+    .attendance-modal label {
+        color: #cbd5e1;
+        margin-bottom: 6px;
+        font-size: 14px;
+    }
+
+    .remarks-input {
+        background: #1e293b;
+        border: 1px solid #334155;
+        color: white;
+        border-radius: 10px;
+        height: 48px;
+    }
+
+    .remarks-input:focus {
+        background: #1e293b;
+        color: white;
+        border-color: #2563eb;
+        box-shadow: none;
+    }
+
+    .modal-content {
+        border-radius: 20px;
+    }
+
+    .modal-dialog {
+        display: flex;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .form-select {
+        background: #1e293b;
+        color: white;
+        border: 1px solid #334155;
+    }
+
+    .form-select option {
+        background: #1e293b;
+        color: white;
+    }
+
+    .modal-body {
+        padding: 30px;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+
+<div class="main-content">
+
+    <div class="container-fluid mt-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Student Attendance — Batches</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#batchModal">+ New Batch</button>
+        </div>
+
+        <!-- TOP CARDS -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="top-card">
+                    <div class="icon-box icon-batches">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <p>Total Batches</p>
+                    <h2 id="totalBatches">0</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="top-card">
+                    <div class="icon-box icon-marked">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <p>Attendance Marked</p>
+                    <h2 id="attendanceMarked">0</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="top-card">
+                    <div class="icon-box icon-notmarked">
+                        <i class="fa-regular fa-clock"></i>
+                    </div>
+                    <p>Not Marked</p>
+                    <h2 id="notMarked">0</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="top-card">
+                    <div class="icon-box icon-students">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <p>Total Students</p>
+                    <h2 id="totalStudents">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- BATCHES -->
+        <div class="row mt-3" id="batchContainer"></div>
+
+        <!-- BATCH CREATE MODAL -->
+        <div class="modal fade" id="batchModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content attendance-modal">
+
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title">Create New Batch</h5>
+
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
+                        </button>
+                    </div>
+
+                    <form method="post" id="batchForm">
+                        {% csrf_token %}
+
+                        <div class="modal-body">
+
+                            <div class="mb-3">
+                                <label>Batch Name</label>
+                                {{ form.batch_name }}
+                            </div>
+
+                            <div class="grid gap-3">
+                            <div class="mb-3">
+                                <label>Course</label>
+                                {{ form.course }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Timing</label>
+                                {{ form.timing }}
+                            </div>
+                            </div>
+
+                            <div class="grid gap-3">
+                            <div class="mb-3">
+                                <label>Start Time</label>
+                                {{ form.start_time }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label>End Time</label>
+                                {{ form.end_time }}
+                            </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Trainer</label>
+                                {{ form.trainer }}
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer border-secondary">
+
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+
+                            <button type="submit" class="btn btn-primary">
+                                Create Batch
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    // CSRF helper
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    document.getElementById('batchForm')
+        .addEventListener('submit', async function (e) {
+
+            e.preventDefault()
+
+            const res = await fetch('/api/batches/', {
+
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+
+                body: JSON.stringify({
+
+                    batch_name:
+                        document.getElementById('id_batch_name').value,
+
+                    course:
+                        document.getElementById('id_course').value,
+
+                    timing:
+                        document.getElementById('id_timing').value,
+
+                    start_time:
+                        document.getElementById('id_start_time').value,
+
+                    end_time:
+                        document.getElementById('id_end_time').value,
+
+                    trainer:
+                        document.getElementById('id_trainer').value || null
+                })
+            })
+
+            if (res.ok) {
+
+                bootstrap.Modal
+                    .getInstance(document.getElementById('batchModal'))
+                    .hide()
+
+                document.getElementById('batchForm').reset()
+
+                loadBatches()
+
+                alert('Batch Created Successfully')
+            }
+            else {
+
+                const error = await res.text()
+
+                console.log("SERVER ERROR:", error)
+
+                alert(error)
+            }
+        })
+
+
+    function formatTime(timeStr) {
+
+    const date = new Date(`1970-01-01T${timeStr}`);
+
+    return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
+    async function loadBatches() {
+
+        const res = await fetch('/api/batches/')
+        const batches = await res.json()
+
+        const container = document.getElementById('batchContainer')
+        container.innerHTML = ''
+
+        let totalStudents = 0
+        let markedCount = 0
+        let notMarkedCount = 0
+
+        document.getElementById('totalBatches').innerText = batches.length
+
+        batches.forEach(batch => {
+
+            totalStudents += batch.student_count
+
+            if (batch.is_marked) markedCount++
+            else notMarkedCount++
+
+            container.innerHTML += `
+        <div class="col-lg-4 col-md-6">
+            <div class="batch-card" id="batch-${batch.id}">
+
+                <div class="d-flex justify-content-between">
+                    <h4>${batch.batch_name}</h4>
+
+                    <span class="status ${batch.is_marked ? 'marked' : 'not-marked'}">
+                        ${batch.is_marked ? 'Marked' : 'Not Marked'}
+                    </span>
+                </div>
+
+                <p class="mt-2"><i class="fa-regular fa-clock"></i> ${batch.timing} - ${formatTime(batch.start_time)} to ${formatTime(batch.end_time)}</p>
+
+                <p>Total Students: <strong>${batch.student_count}</strong></p>
+                <p>Trainer: <strong>${batch.trainer_name || 'No Trainer'}</strong></p>
+
+                <button class="btn-attendance" onclick="window.location.href='/api/mark-attendance/${batch.id}/'">
+                ${batch.is_marked ? 'Update Entry' : 'Mark Attendance'}
+                </button>
+
+            </div>
+        </div>
+        `
+        })
+
+        document.getElementById('totalStudents').innerText = totalStudents
+        document.getElementById('attendanceMarked').innerText = markedCount
+        document.getElementById('notMarked').innerText = notMarkedCount
+    }
+
+    async function markAttendance(enrollment, batchId, status, remarks) {
+
+        for (let data of attendanceData) {
+
+            if ((data.status === 'Absent' || data.status === 'Late') && !data.remarks) {
+            alert("Remarks required")
+            return
+        }
+
+        const res = await fetch('/api/attendance/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                enrollment: enrollment,
+                batch: batchId,
+                status: status,
+                remarks: remarks ,
+            })
+        })
+    }
+
+        if (res.ok) {
+            alert("Attendance Marked Successfully 👍")
+
+            // reload to update UI
+            loadBatches()
+        } else {
+            const err = await res.text()
+            console.log("Error:", err)
+            alert("Failed to mark attendance ❌")
+        }
+    }
+
+    loadBatches()
+
+</script>
+
+{% endblock %}
