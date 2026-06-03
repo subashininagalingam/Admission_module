@@ -118,7 +118,7 @@ class CourseForm(forms.ModelForm):
         model = Course
         fields = '__all__'
         widgets = {
-            'course': forms.TextInput(attrs={'placeholder': 'Enter course name', 'required': True}),
+            'course_name': forms.TextInput(attrs={'placeholder': 'Enter course name', 'required': True}),
             'duration': forms.TextInput(attrs={'placeholder': 'Enter course duration', 'required': True}),      
             'course_fee': forms.NumberInput(attrs={'placeholder': 'Enter course fee', 'required': True}),
         }
@@ -127,14 +127,14 @@ class CourseForm(forms.ModelForm):
 class AdmissionForm(forms.ModelForm):
     class Meta:
         model = Admission
-        fields = ['course', 'status']
+        fields = ['course_name', 'status']
         widgets = {
             'status': forms.RadioSelect()
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['course'].empty_label = "Select Course"
+        self.fields['course_name'].empty_label = "Select Course"
 
 
 

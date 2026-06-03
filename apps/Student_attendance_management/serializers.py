@@ -2,6 +2,7 @@ from apps.admissions.models import Enrollment
 from rest_framework import serializers
 from django.utils import timezone
 from .models import (
+    SyllabusLog,
     Trainer,
     Batch,
     Attendance
@@ -21,12 +22,18 @@ class BatchSerializer(serializers.ModelSerializer):
     is_marked = serializers.SerializerMethodField()
     student_count = serializers.SerializerMethodField()
 
+    course_name = serializers.CharField(
+        source='course.course_name',
+        read_only=True
+    )
+
     class Meta:
         model = Batch
         fields = [
             'id',
             'batch_name',
             'course',
+            'course_name',
             'timing',
             'start_time',
             'end_time',
@@ -39,7 +46,7 @@ class BatchSerializer(serializers.ModelSerializer):
     def get_student_count(self, obj):
 
         return Enrollment.objects.filter(
-            admission__course=obj.course
+            admission__course_name=obj.course
         ).count()
 
     def get_trainer_name(self, obj):
@@ -58,3 +65,9 @@ class AttendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attendance
         fields = '__all__'
+
+class SyllabusLogSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SyllabusLog
+        fields = "__all__"

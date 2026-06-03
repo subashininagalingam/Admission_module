@@ -62,8 +62,8 @@ class Student(models.Model):
     
     def total_fee(self):
         admission = self.admissions.first()
-        if admission and admission.course:
-            return admission.course.course_fee
+        if admission and admission.course_name:
+            return admission.course_name.course_fee
         return 0
     
     def pending_amount(self):
@@ -107,18 +107,18 @@ class Payment(models.Model):
 
 
 class Course(models.Model):
-    course = models.CharField(max_length=50, null=False, blank=False)
+    course_name = models.CharField(max_length=50, null=False, blank=False)
 
     duration = models.CharField(max_length=20 ,null=False, blank=False)
     course_fee = models.IntegerField(null=False, blank=False)
 
     def __str__(self):
-        return self.course
+        return self.course_name
 
 
 class Admission(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='admissions')
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    course_name = models.ForeignKey(Course, on_delete=models.CASCADE)
 
     STATUS = [
         ('enquiry', 'Enquiry'),
@@ -132,7 +132,7 @@ class Admission(models.Model):
     applied_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.student} - {self.course}"
+        return f"{self.student} - {self.course_name}"
 
 
 class Enrollment(models.Model):
@@ -160,7 +160,7 @@ class Enrollment(models.Model):
     @property
     def course(self):
 
-        return self.admission.course
+        return self.admission.course_name
 
     def __str__(self):
 

@@ -5,7 +5,7 @@ from apps.Student_attendance_management.forms import BatchForm
 
 from rest_framework import viewsets
 from django.shortcuts import render
-from apps.admissions.models import Course, Enrollment
+from apps.admissions.models import Enrollment
 from django.utils import timezone
 from rest_framework import generics
 from rest_framework import status
@@ -13,17 +13,24 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.utils.timezone import localdate
+from rest_framework import filters
+
+from django.db import transaction
+from rest_framework import status
+from rest_framework.views import APIView
 
 from .models import (
     Trainer,
     Batch,
-    Attendance
+    Attendance,
+    SyllabusLog
 )
 
 from .serializers import (
     TrainerSerializer,
     BatchSerializer,
-    AttendanceSerializer
+    AttendanceSerializer,
+    SyllabusLogSerializer
 )
 
 
@@ -39,6 +46,15 @@ class BatchViewSet(viewsets.ModelViewSet):
     queryset = Batch.objects.all()
 
     serializer_class = BatchSerializer
+
+    filter_backends = [filters.SearchFilter]
+
+    search_fields = [
+        'batch_name',
+        'timing',
+        'trainer__trainer_name',
+        'course__course_name'
+    ]
 
 class AttendanceViewSet(viewsets.ModelViewSet):
 
@@ -73,6 +89,95 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             serializer.data,
             status=status.HTTP_200_OK
         )
+    
+class AttendanceSubmitAPIView(APIView):
+
+    @transaction.atomic
+    def post(self, request):
+
+        batch_id = request.data.get("batch")
+
+        attendance_list = request.data.get(
+            "attendance",
+            []
+        )
+
+        syllabus_data = request.data.get(
+            "syllabus_log",
+            {}
+        )
+
+        try:
+
+            batch = Batch.objects.get(
+                id=batch_id
+            )
+
+        except Batch.DoesNotExist:
+
+            return Response(
+                {
+                    "status": False,
+                    "message": "Batch not found"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        for item in attendance_list:
+
+            Attendance.objects.update_or_create(
+
+                enrollment_id=item["enrollment"],
+
+                batch=batch,
+
+                attendance_date=timezone.now().date(),
+
+                defaults={
+                    "status": item["status"],
+                    "remarks": item.get(
+                        "remarks",
+                        ""
+                    ),
+                    "trainer": batch.trainer
+                }
+            )
+
+        SyllabusLog.objects.create(
+
+            batch=batch,
+
+            trainer=batch.trainer,
+
+            topic_covered=syllabus_data[
+                "topic_covered"
+            ],
+
+            duration=syllabus_data[
+                "duration"
+            ],
+
+            next_topic=syllabus_data.get(
+                "next_topic"
+            ),
+
+            trainer_notes=syllabus_data.get(
+                "trainer_notes"
+            )
+        )
+
+        return Response(
+            {
+                "status": True,
+                "message":
+                "Attendance and syllabus log saved successfully"
+            },
+            status=status.HTTP_200_OK
+        )
+    
+class SyllabusLogViewSet(viewsets.ModelViewSet):
+    queryset = SyllabusLog.objects.all().order_by('-date')
+    serializer_class = SyllabusLogSerializer
 
 
 def batches_page(request):
@@ -97,7 +202,7 @@ def mark_attendance_page(request, batch_id):
     )
 
     enrollments = Enrollment.objects.filter(
-        admission__course=batch.course
+        admission__course_name=batch.course
     )
 
     attendance_records = Attendance.objects.filter(
@@ -110,10 +215,16 @@ def mark_attendance_page(request, batch_id):
         for att in attendance_records
     }
 
+    remarks_map = {
+        att.enrollment_id: att.remarks
+        for att in attendance_records
+    }
+
     context = {
         'batch': batch,
         'enrollments': enrollments,
-        'attendance_map': attendance_map
+        'attendance_map': attendance_map,
+        'remarks_map': remarks_map
     }
 
     return render(
@@ -144,30 +255,142 @@ def today_attendance_summary(request, batch_id):
 
 
 @api_view(['POST'])
+@transaction.atomic
 def bulk_attendance(request):
 
-    enrollment = request.data.get('enrollment')
-    batch = request.data.get('batch')
-    attendance_status = request.data.get('status')
-    remarks = request.data.get('remarks', '')
+    print("REQUEST DATA:")
+    print(request.data)
+
+    batch_id = request.data.get('batch')
+
+    attendance_list = request.data.get(
+        'attendance',
+        []
+    )
+
+    syllabus_data = request.data.get(
+        'syllabus_log',
+        {}
+    )
+
+    if not syllabus_data.get('topic_covered'):
+        return Response(
+            {
+                'status': False,
+                'message': 'Topic covered is required'
+            },
+            status=400
+        )
+
+    duration = syllabus_data.get('duration')
+
+    if not duration:
+        return Response(
+            {
+                'status': False,
+                'message': 'Duration is required'
+            },
+            status=400
+        )
+
+    try:
+
+        batch_obj = Batch.objects.get(
+            id=batch_id
+        )
+
+    except Batch.DoesNotExist:
+
+        return Response(
+            {
+                'status': False,
+                'message': 'Batch not found'
+            },
+            status=404
+        )
 
     attendance_date = timezone.now().date()
 
-    batch_obj = Batch.objects.get(id=batch)
+    for item in attendance_list:
 
-    Attendance.objects.update_or_create(
+        Attendance.objects.update_or_create(
 
-        enrollment_id=enrollment,
-        batch_id=batch,
-        attendance_date=attendance_date,
+            enrollment_id=item['enrollment'],
 
-        defaults={
-            'status': attendance_status,
-            'trainer': batch_obj.trainer,
-            'remarks': remarks
-        }
-    )
+            batch_id=batch_id,
+
+            attendance_date=attendance_date,
+
+            defaults={
+                'status': item['status'],
+                'remarks': item.get(
+                    'remarks',
+                    ''
+                ),
+                'trainer': batch_obj.trainer
+            }
+        )
+
+    SyllabusLog.objects.update_or_create(
+
+    batch=batch_obj,
+
+    date=attendance_date,
+
+    defaults={
+        'trainer': batch_obj.trainer,
+        'topic_covered': syllabus_data.get(
+            'topic_covered'
+        ),
+        'duration': syllabus_data.get(
+            'duration'
+        ),
+        'next_topic': syllabus_data.get(
+            'next_topic',
+            ''
+        ),
+        'trainer_notes': syllabus_data.get(
+            'trainer_notes',
+            ''
+        )
+    }
+)
 
     return Response({
-        'message': 'Attendance saved'
+        'status': True,
+        'message':
+        'Attendance and syllabus log saved successfully'
     })
+
+def attendance_report_page(request):
+
+    records = Attendance.objects.select_related(
+        'enrollment',
+        'batch'
+    ).order_by('-attendance_date')
+
+    today = timezone.now().date()
+
+    context = {
+    "records": records, 
+    "total_students": Enrollment.objects.count(),
+    "total_batches": Batch.objects.count(),
+    "present_today": Attendance.objects.filter(
+        attendance_date=today,
+        status="Present"
+    ).count(),
+    "absent_today": Attendance.objects.filter(
+        attendance_date=today,
+        status="Absent"
+    ).count(),
+    "late_today": Attendance.objects.filter(
+        attendance_date=today,
+        status="Late"
+    ).count(),
+}
+
+    return render(
+        request,
+        'attendance/attendance_report.html',
+        context
+    )

@@ -22,6 +22,12 @@
 
         <div class="top-actions">
 
+            <div class="search-box mb-3">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" class="form-control"
+                    placeholder="Search Student Name or Student ID...">
+            </div>
+
             <a href="{% url 'batches_page' %}" class="btn btn-back">
                 Back
             </a>
@@ -122,6 +128,30 @@
 
                 </div>
 
+                <div class="mt-4">
+
+                    <div class="mb-3">
+                        <label class="form-label">Topic Covered *</label>
+                        <input type="text" id="topicCovered" class="form-control" placeholder="Enter topic covered">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Duration (Minutes) *</label>
+                        <input type="number" id="duration" class="form-control" placeholder="Duration in minutes">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Next Topic</label>
+                        <input type="text" id="nextTopic" class="form-control" placeholder="Enter next topic">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Trainer Notes</label>
+                        <textarea id="trainerNotes" class="form-control" rows="3"></textarea>
+                    </div>
+
+                </div>
+
             </div>
 
             <div class="modal-footer border-0">
@@ -144,59 +174,82 @@
 
 <script>
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let cookie of cookies) {
-            cookie = cookie.trim();
-            if (cookie.startsWith(name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
         }
+        return cookieValue;
     }
-    return cookieValue;
-}
 
-const csrftoken = getCookie('csrftoken');
+    const csrftoken = getCookie('csrftoken');
 
-let attendanceData = [];
+    let attendanceData = [];
 
-const students = [
-    {% for enrollment in enrollments %}
+    const students = [
+        {% for enrollment in enrollments %}
     {
         enrollment: {{ enrollment.id }},
         student_name: "{{ enrollment.student.first_name }} {{ enrollment.student.last_name }}",
-        status: "{{ attendance_map|get_item:enrollment.id|default:'Present' }}"
+            student_id: "STU{{ enrollment.student.id }}",
+                photo: {% if enrollment.student.photo %} "{{ enrollment.student.photo.url }}"{% else %} null{% endif %},
+        status: "{{ attendance_map|get_item:enrollment.id|default:'Present' }}",
+            remarks: "{{ remarks_map|get_item:enrollment.id|default:'' |escapejs }}"
     },
     {% endfor %}
 ];
 
-function loadStudents() {
+    function loadStudents() {
 
-    const tbody = document.getElementById('studentBody');
-    tbody.innerHTML = '';
-    attendanceData = [];
+        const tbody = document.getElementById('studentBody');
+        tbody.innerHTML = '';
+        attendanceData = [];
 
-    document.getElementById('totalCount').innerText = students.length;
+        document.getElementById('totalCount').innerText = students.length;
 
-    students.forEach((student, index) => {
+        students.forEach((student, index) => {
 
-        attendanceData.push({
-            enrollment: student.enrollment,
-            status: student.status,
-            remarks: ''
-        });
+            attendanceData.push({
+                enrollment: student.enrollment,
+                status: student.status,
+                remarks: student.remarks || "",
+            });
 
-        tbody.innerHTML += `
+            tbody.innerHTML += `
         <tr class="row-${index}">
 
             <td>${index + 1}</td>
 
-            <td>${student.student_name}</td>
+            <td>
+              <div class="student-info">
 
-            <td>STU${index + 1}</td>
+                ${student.photo
+                    ?
+                    `<img src="${student.photo}" class="student-avatar-img" alt="Student">`
+                    :
+                    `<div class="student-avatar avatar-${index} ">
+                ${student.student_name
+                        .split(' ')
+                        .map(word => word[0])
+                        .join('')
+                        .substring(0, 2)
+                        .toUpperCase()}
+                </div>`
+                }
+
+                <span>${student.student_name}</span>
+
+                </div>
+            </td>
+
+            <td>${student.student_id}</td>
 
             <td>
 
@@ -213,139 +266,217 @@ function loadStudents() {
 
             <td>
                 <input type="text"
+                    id="remark-${index}"
                     class="form-control remarks-input"
-                    placeholder="Optional"
+                    value="${student.remarks || ''}"
+                    placeholder="${student.status === 'Present' ? 'Optional' : 'Remarks required'}"
                     onchange="setRemark(${index},this.value)">
             </td>
 
         </tr>`;
-    });
+        });
 
-    updateCounts();
-}
-
-function setStatus(index, status) {
-
-    // update data
-    attendanceData[index].status = status;
-
-    // get row buttons
-    const row = document.querySelector(`.row-${index}`);
-    const buttons = row.querySelectorAll('.status-btn');
-
-    // remove active from all buttons in that row
-    buttons.forEach(btn => btn.classList.remove('active'));
-
-    // add active to clicked one
-    let activeBtn;
-
-    if (status === 'Present') {
-        activeBtn = row.querySelector('.present');
-    } else if (status === 'Absent') {
-        activeBtn = row.querySelector('.absent');
-    } else if (status === 'Late') {
-        activeBtn = row.querySelector('.late');
+        updateCounts();
     }
 
-    if (activeBtn) {
-        activeBtn.classList.add('active');
-    }
+    function setStatus(index, status) {
 
-    updateCounts();
-}
+        // update data
+        attendanceData[index].status = status;
 
-function setRemark(index, value) {
-    attendanceData[index].remarks = value;
-}
+        // get row buttons
+        const row = document.querySelector(`.row-${index}`);
+        const buttons = row.querySelectorAll('.status-btn');
 
-function updateCounts() {
+        // remove active from all buttons in that row
+        buttons.forEach(btn => btn.classList.remove('active'));
 
-    let present = 0, absent = 0, late = 0;
+        // add active to clicked one
+        let activeBtn;
 
-    attendanceData.forEach(d => {
-        if (d.status === 'Present') present++;
-        if (d.status === 'Absent') absent++;
-        if (d.status === 'Late') late++;
-    });
-
-    document.getElementById('presentCount').innerText = present;
-    document.getElementById('absentCount').innerText = absent;
-    document.getElementById('lateCount').innerText = late;
-}
-
-async function submitAttendance() {
-
-    // ✅ VALIDATION
-    for (let data of attendanceData) {
-        if (
-            (data.status === 'Absent' || data.status === 'Late') &&
-            (!data.remarks || data.remarks.trim() === '')
-        ) {
-            alert("Remarks required for Absent / Late");
-            return;
+        if (status === 'Present') {
+            activeBtn = row.querySelector('.present');
+        } else if (status === 'Absent') {
+            activeBtn = row.querySelector('.absent');
+        } else if (status === 'Late') {
+            activeBtn = row.querySelector('.late');
         }
+
+
+        activeBtn.classList.add('active');
+
+
+        const remarkInput = document.getElementById(`remark-${index}`);
+
+        if (status === 'Present') {
+            remarkInput.value = '';
+            remarkInput.placeholder = 'Optional';
+        } else {
+            remarkInput.value = attendanceData[index].remarks || '';
+            remarkInput.placeholder = 'Remarks Required';
+        }
+
+        updateCounts();
     }
 
-    try {
+    function setRemark(index, value) {
+        attendanceData[index].remarks = value;
+    }
+
+    function updateCounts() {
+
+        let present = 0, absent = 0, late = 0;
+
+        attendanceData.forEach(d => {
+            if (d.status === 'Present') present++;
+            if (d.status === 'Absent') absent++;
+            if (d.status === 'Late') late++;
+        });
+
+        document.getElementById('presentCount').innerText = present;
+        document.getElementById('absentCount').innerText = absent;
+        document.getElementById('lateCount').innerText = late;
+    }
+
+    async function submitAttendance() {
 
         for (let data of attendanceData) {
 
-            await fetch('/api/attendance/bulk/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
-                },
-                body: JSON.stringify({
-                    enrollment: data.enrollment,
-                    batch: {{ batch.id }},
-                    status: data.status,
-                    remarks: data.remarks || ""
-                })
-            });
+            if (
+                (data.status === 'Absent' || data.status === 'Late') &&
+                (!data.remarks || data.remarks.trim() === '')
+            ) {
+                alert("Remarks required for Absent / Late");
+                return;
+            }
         }
 
-        alert("Attendance Submitted Successfully 👍");
-        window.location.href = '/api/batches-page/';
+        const topicCovered =
+            document.getElementById("topicCovered").value;
 
-    } catch (error) {
-        console.log(error);
-        alert("Error submitting attendance ❌");
-    }
-}
+        const duration =
+            document.getElementById("duration").value;
 
-loadStudents();
+        const nextTopic =
+            document.getElementById("nextTopic").value;
 
-document.getElementById('attendanceModal')
-.addEventListener('show.bs.modal', function () {
+        const trainerNotes =
+            document.getElementById("trainerNotes").value;
 
-    document.getElementById('modalPresent').innerText =
-        document.getElementById('presentCount').innerText;
-
-    document.getElementById('modalAbsent').innerText =
-        document.getElementById('absentCount').innerText;
-
-    document.getElementById('modalLate').innerText =
-        document.getElementById('lateCount').innerText;
-});
-
-function openAttendanceModal() {
-
-    // ✅ VALIDATION BEFORE OPEN MODAL
-    for (let data of attendanceData) {
-        if (
-            (data.status === 'Absent' || data.status === 'Late') &&
-            (!data.remarks || data.remarks.trim() === '')
-        ) {
-            alert("Remarks required for Absent / Late");
-            return; // stop modal open
+        if (!topicCovered.trim()) {
+            alert("Topic Covered is required");
+            return;
         }
+
+        if (!duration || duration <= 0) {
+            alert("Valid duration is required");
+            return;
+        }
+
+        try {
+
+            const response = await fetch(
+                "/api/attendance/bulk/",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrftoken
+                    },
+                    body: JSON.stringify({
+                        batch: {{ batch.id }},
+                attendance: attendanceData,
+                syllabus_log: {
+                topic_covered: topicCovered,
+                duration: duration,
+                next_topic: nextTopic,
+                trainer_notes: trainerNotes
+            }
+            })
+    }
+    );
+
+    const result = await response.json();
+
+    console.log(result);
+
+    if (response.ok) {
+        alert("Success");
+    } else {
+        alert(JSON.stringify(result));
     }
 
-    // open modal manually
-    const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
-    modal.show();
-}
+} catch (error) {
+        console.error(error);
+    }
+    }
+
+    function searchStudents(searchText) {
+
+        searchText = searchText.toLowerCase();
+
+        document.querySelectorAll('#studentBody tr').forEach(row => {
+
+            const studentName =
+                row.children[1].innerText.toLowerCase();
+
+            const studentId =
+                row.children[2].innerText.toLowerCase();
+
+            if (
+                studentName.includes(searchText) ||
+                studentId.includes(searchText)
+            ) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    loadStudents();
+
+    document.querySelectorAll('.student-avatar').forEach((el, index) => {
+        el.style.background = getAvatarColor(index);
+    });
+
+    document.getElementById('searchInput')
+        .addEventListener('input', function () {
+
+            searchStudents(this.value);
+        });
+
+
+    document.getElementById('attendanceModal')
+        .addEventListener('show.bs.modal', function () {
+
+            document.getElementById('modalPresent').innerText =
+                document.getElementById('presentCount').innerText;
+
+            document.getElementById('modalAbsent').innerText =
+                document.getElementById('absentCount').innerText;
+
+            document.getElementById('modalLate').innerText =
+                document.getElementById('lateCount').innerText;
+        });
+
+    function openAttendanceModal() {
+
+        // ✅ VALIDATION BEFORE OPEN MODAL
+        for (let data of attendanceData) {
+            if (
+                (data.status === 'Absent' || data.status === 'Late') &&
+                (!data.remarks || data.remarks.trim() === '')
+            ) {
+                alert("Remarks required for Absent / Late");
+                return; // stop modal open
+            }
+        }
+
+        // open modal manually
+        const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+        modal.show();
+    }
 
 </script>
 

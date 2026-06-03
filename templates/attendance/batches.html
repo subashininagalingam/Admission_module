@@ -190,6 +190,27 @@
     .modal-body {
         padding: 30px;
     }
+
+    .search-box {
+        position: relative;
+        width: 400px;
+        margin-left: 250px;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #888;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 10px 10px 10px 40px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+    }
 </style>
 {% endblock extra_css %}
 
@@ -201,6 +222,10 @@
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Student Attendance — Batches</h2>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search by batch, course, trainer, timing...">
+            </div>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#batchModal">+ New Batch</button>
         </div>
 
@@ -270,27 +295,27 @@
                             </div>
 
                             <div class="grid gap-3">
-                            <div class="mb-3">
-                                <label>Course</label>
-                                {{ form.course }}
-                            </div>
+                                <div class="mb-3">
+                                    <label>Course</label>
+                                    {{ form.course }}
+                                </div>
 
-                            <div class="mb-3">
-                                <label>Timing</label>
-                                {{ form.timing }}
-                            </div>
+                                <div class="mb-3">
+                                    <label>Timing</label>
+                                    {{ form.timing }}
+                                </div>
                             </div>
 
                             <div class="grid gap-3">
-                            <div class="mb-3">
-                                <label>Start Time</label>
-                                {{ form.start_time }}
-                            </div>
+                                <div class="mb-3">
+                                    <label>Start Time</label>
+                                    {{ form.start_time }}
+                                </div>
 
-                            <div class="mb-3">
-                                <label>End Time</label>
-                                {{ form.end_time }}
-                            </div>
+                                <div class="mb-3">
+                                    <label>End Time</label>
+                                    {{ form.end_time }}
+                                </div>
                             </div>
 
                             <div class="mb-3">
@@ -399,19 +424,23 @@
 
     function formatTime(timeStr) {
 
-    const date = new Date(`1970-01-01T${timeStr}`);
+        const date = new Date(`1970-01-01T${timeStr}`);
 
-    return date.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-    });
-}
+        return date.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
 
-    async function loadBatches() {
+    async function loadBatches(search = "") {
 
-        const res = await fetch('/api/batches/')
+        const res = await fetch(`/api/batches/?search=${encodeURIComponent(search)}`)
+        console.log(res)
+
         const batches = await res.json()
+        console.log("Batches:", batches)
+
 
         const container = document.getElementById('batchContainer')
         container.innerHTML = ''
@@ -434,7 +463,7 @@
             <div class="batch-card" id="batch-${batch.id}">
 
                 <div class="d-flex justify-content-between">
-                    <h4>${batch.batch_name}</h4>
+                    <h4>${batch.course_name} ${batch.batch_name}</h4>
 
                     <span class="status ${batch.is_marked ? 'marked' : 'not-marked'}">
                         ${batch.is_marked ? 'Marked' : 'Not Marked'}
@@ -465,24 +494,24 @@
         for (let data of attendanceData) {
 
             if ((data.status === 'Absent' || data.status === 'Late') && !data.remarks) {
-            alert("Remarks required")
-            return
-        }
+                alert("Remarks required")
+                return
+            }
 
-        const res = await fetch('/api/attendance/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({
-                enrollment: enrollment,
-                batch: batchId,
-                status: status,
-                remarks: remarks ,
+            const res = await fetch('/api/attendance/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    enrollment: enrollment,
+                    batch: batchId,
+                    status: status,
+                    remarks: remarks,
+                })
             })
-        })
-    }
+        }
 
         if (res.ok) {
             alert("Attendance Marked Successfully 👍")
@@ -497,6 +526,12 @@
     }
 
     loadBatches()
+
+    document.getElementById('searchInput')
+        .addEventListener('input', function () {
+
+            loadBatches(this.value);
+        });
 
 </script>
 

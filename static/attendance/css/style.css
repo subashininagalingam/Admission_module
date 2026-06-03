@@ -13,6 +13,11 @@ border-right: 1px solid #1e293b;
 
 }
 
+.sidebar a.active{
+    background:#2563eb;
+    color:white;
+}
+
 .logo-heading {
 color: white;
 font-size: 28px;

@@ -167,15 +167,15 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_TIMEOUT = 60
 
 cloudinary.config(
-    cloud_name=os.environ.get('CLOUD_NAME'),
-    api_key=os.environ.get('API_KEY'),
-    api_secret=os.environ.get('API_SECRET'),
+    cloud_name='dxslozfwa',
+    api_key='761268614366864',
+    api_secret='0rEtaxo9thaaIB_ieP-GnsUMdII',
     secure=True
 )
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUD_NAME'),
-    'API_KEY': os.environ.get('API_KEY'),
-    'API_SECRET': os.environ.get('API_SECRET'),
+    'CLOUD_NAME': 'dxslozfwa',
+    'API_KEY':'761268614366864',
+    'API_SECRET': '0rEtaxo9thaaIB_ieP-GnsUMdII',
 }
 

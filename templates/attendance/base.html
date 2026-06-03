@@ -28,31 +28,35 @@
                 CSC CRM
             </h4>
 
-            <a href="{% url 'batches_page' %}" class="active">
+            <a href="{% url 'batches_page' %}"
+                class="{% if request.resolver_match.url_name == 'batches_page' %}active{% endif %}">
                 <i class="fa-solid fa-layer-group"></i>
                 Batches
             </a>
 
-            <a href="#">
+            <a href="#"
+                class="{% if request.resolver_match.url_name == 'mark_attendance' %}active{% endif %}">
                 <i class="fa-solid fa-square-check"></i>
                 Mark Attendance
             </a>
 
-            <a href="">
+            <a href="{% url 'attendance_report' %}"
+                class="{% if request.resolver_match.url_name == 'attendance_report' %}active{% endif %}">
                 <i class="fa-solid fa-clock-rotate-left"></i>
                 Attendance Report
             </a>
 
-            <a href="#">
+            <a href="#"
+                class="{% if request.resolver_match.url_name == 'absent_tracker' %}active{% endif %}">
                 <i class="fa-solid fa-user-xmark"></i>
                 Absent Tracker
             </a>
 
-            <a href="#">
+            <a href="#"
+                class="{% if request.resolver_match.url_name == 'syllabus_log' %}active{% endif %}">
                 <i class="fa-solid fa-book"></i>
                 Syllabus Log
             </a>
-
 
         </div>
 

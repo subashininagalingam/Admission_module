@@ -1,0 +1,104 @@
+{% extends 'attendance/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'attendance/css/attendance_report.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="main-content">
+
+    <h2 class="page-title">Attendance Report</h2>
+
+    <div class="report-card">
+
+        <div class="table-responsive">
+
+            <table class="table">
+
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Student Name</th>
+                        <th>Course</th>
+                        <th>Batch</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for record in records %}
+                    <tr>
+
+                        <td>{{ record.attendance_date }}</td>
+
+                        <td>
+                            <div class="student-info">
+
+                                {% if record.enrollment.student.photo %}
+
+                                <img src="{{ record.enrollment.student.photo.url }}" class="student-avatar-img"
+                                    alt="Student">
+
+                                {% else %}
+
+                                <div class="student-avatar">
+                                    {{ record.enrollment.student.first_name|slice:":1" }}{{ record.enrollment.student.last_name|slice:":1" }}
+                                </div>
+
+                                {% endif %}
+
+                                <span>
+                                    {{ record.enrollment.student.first_name }}
+                                    {{ record.enrollment.student.last_name }}
+                                </span>
+
+                            </div>
+                        </td>
+
+                        <td>{{ record.enrollment.course.course_name }}</td>
+
+                        <td>{{ record.batch.batch_name }}</td>
+
+                        <td>
+
+                            {% if record.status == "Present" %}
+                            <span class="badge-present">Present</span>
+
+                            {% elif record.status == "Absent" %}
+                            <span class="badge-absent">Absent</span>
+
+                            {% else %}
+                            <span class="badge-late">Late</span>
+                            {% endif %}
+
+                        </td>
+
+                        <td>{{ record.remarks|default:"-" }}</td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="5" class="empty-row">
+                            No attendance records found
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

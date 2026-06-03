@@ -13,13 +13,13 @@ class StudentFilter(django_filters.FilterSet):
         lookup_expr='iexact'
     )
 
-    course = django_filters.CharFilter(
-        field_name='admissions__course__course',
+    course_name  = django_filters.CharFilter(
+        field_name='admissions__course_name__course_name',
         lookup_expr='iexact'
     )
 
     batch = django_filters.CharFilter(
-        field_name='admissions__enrollment__batch',
+        field_name='admissions__enrollment__batch__batch_name',
         lookup_expr='iexact'
     )
 
@@ -37,7 +37,7 @@ class StudentFilter(django_filters.FilterSet):
         model = Student
         fields = [
             'search', 'id', 'phone_no',
-            'course', 'batch', 'status', 'payment_status'
+            'course_name', 'batch', 'status', 'payment_status'
         ]
 
     def custom_search(self, queryset, name, value):

@@ -3,9 +3,12 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    AttendanceSubmitAPIView,
+    SyllabusLogViewSet,
     TrainerViewSet,
     BatchViewSet,
     AttendanceViewSet,
+    attendance_report_page,
     batches_page,
     mark_attendance_page,
     bulk_attendance,
@@ -19,6 +22,8 @@ router.register(r'trainers', TrainerViewSet)
 router.register(r'batches', BatchViewSet)
 
 router.register(r'attendance', AttendanceViewSet)
+
+router.register(r'syllabus-logs',SyllabusLogViewSet)
 
 urlpatterns = [
 
@@ -41,6 +46,18 @@ urlpatterns = [
     bulk_attendance,
     name='bulk_attendance'
     ),
+
+    path(
+        "attendance/submit/",
+        AttendanceSubmitAPIView.as_view(),
+        name="attendance-submit"
+    ),
+
+    path(
+    'attendance-report/',
+    attendance_report_page,
+    name='attendance_report'
+),
 
     path(
         '',

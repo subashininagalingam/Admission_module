@@ -58,7 +58,7 @@ def student(request):
 
                 admission = Admission.objects.create(
                     student=student,
-                    course=admission_form.cleaned_data['course'],
+                    course_name=admission_form.cleaned_data['course_name'],
                     status=admission_form.cleaned_data['status']
                 )
 
@@ -83,7 +83,7 @@ Congratulations! 🎉
 Your admission has been successfully confirmed at CSC Academy.
 
 Course Enrolled:
-{admission.course}
+{admission.course_name}
 
 We are excited to have you as part of our learning journey.
 
@@ -111,7 +111,7 @@ Student Details
 
 Name   : {student.first_name} {student.last_name}
 
-Course : {admission.course}
+Course : {admission.course_name}
 
 Phone  : {student.phone_no}
 
@@ -287,7 +287,7 @@ def fee_dashboard(request):
             ws.append([
             f"{payment.student.first_name} {payment.student.last_name}",
 
-            str(admission.course) if admission else "-",
+            str(admission.course_name) if admission else "-",
 
             str(enrollment.batch) if enrollment else "-",
 
@@ -422,7 +422,7 @@ def generate_receipt(request, pk):
         payment.student.email,
 
         'course':
-        admission.course if admission else "-",
+        admission.course_name if admission else "-",
 
         'batch':
         enrollment.batch if enrollment else "-",
@@ -462,7 +462,7 @@ def student_list(request):
     students = Student.objects.prefetch_related(
         'payments',
         'admissions__enrollment',
-        'admissions__course',
+        'admissions__course_name',
     ).all()
 
     #  FILTER
@@ -508,7 +508,7 @@ def student_list(request):
 
                 ws.append([
                     f"{s.first_name} {s.last_name}",
-                    str(admission.course),
+                    str(admission.course_name) if admission else "-",
                     enrollment.batch if enrollment else "-",
                     s.phone_no,
                     enrollment.payment_status if enrollment else "-",
@@ -546,7 +546,7 @@ def student_list(request):
 
                 data.append([
                     f"{s.first_name} {s.last_name}",
-                    str(admission.course),
+                    str(admission.course_name) if admission else "-",
                     enrollment.batch if enrollment else "-",
                     s.phone_no,
                     enrollment.payment_status if enrollment else "-",
@@ -631,10 +631,10 @@ def edit_student(request, id):
 
         # ================= ADMISSION =================
 
-        course_id = request.POST.get('course')
+        course_id = request.POST.get('course_name')
 
         if course_id:
-            admission.course_id = course_id
+            admission.course_name_id = course_id
 
         admission.status = request.POST.get('status')
 
@@ -674,7 +674,7 @@ def delete_student(request, id):
 def search_students(request):
 
     students = Student.objects.prefetch_related(
-        'admissions__course',
+        'admissions__course_name',
         'admissions__enrollment'
     )
 
@@ -694,7 +694,7 @@ def view_student(request, id):
 
     student = Student.objects.prefetch_related(
         'payments',
-        'admissions__course',
+        'admissions__course_name',
         'admissions__enrollment'
     ).get(id=id)
 

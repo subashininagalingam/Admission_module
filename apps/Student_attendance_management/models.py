@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+
 # from apps.admissions.models import (
 #     Course,
 #     Enrollment
@@ -147,3 +148,66 @@ class Attendance(models.Model):
             f" - {self.status}"
         )
     
+
+
+class SyllabusLog(models.Model):
+
+    batch = models.ForeignKey(
+        'Batch',
+        on_delete=models.CASCADE,
+        related_name='syllabus_logs'
+    )
+
+    trainer = models.ForeignKey(
+        'Trainer',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='syllabus_logs'
+    )
+
+    date = models.DateField(
+        default=timezone.now
+    )
+
+    topic_covered = models.CharField(max_length=255)
+
+    duration = models.PositiveIntegerField(
+        help_text="Duration in minutes"
+    )
+
+    next_topic = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True
+    )
+
+    trainer_notes = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+
+    def clean(self):
+        if self.duration <= 0:
+            raise ValidationError("Duration must be greater than 0")
+
+    def save(self, *args, **kwargs):
+        # auto-assign trainer from batch if not given
+        if not self.trainer and self.batch and self.batch.trainer:
+            self.trainer = self.batch.trainer
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.batch.batch_name} | {self.topic_covered} | {self.date}"

@@ -25,11 +25,11 @@
 
     <input type="text" name="phone_no" maxlength="10" pattern="^\d{10}$" value="{{ request.GET.phone_no }}" placeholder="Phone">
 
-    <select name="course">
+    <select name="course_name">
         <option value="">All Course</option>
         {% for c in courses %}
-        <option value="{{ c.course }}" {% if request.GET.course == c.course %}selected{% endif %}>
-            {{ c.course }}
+        <option value="{{ c.course_name }}" {% if request.GET.course_name == c.course_name %}selected{% endif %}>
+            {{ c.course_name }}
         </option>
         {% endfor %}
     </select>
@@ -93,7 +93,7 @@
 
             <td>STU{{ student.id }}</td>
 
-            <td>{{ admission.course }}</td>
+            <td>{{ admission.course_name }}</td>
 
             <td>
                 <span class="badge {{ admission.status|lower }}">

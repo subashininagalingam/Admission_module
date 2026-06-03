@@ -3,7 +3,8 @@ from django.contrib import admin
 from .models import (
     Trainer,
     Batch,
-    Attendance
+    Attendance,
+    SyllabusLog,
 )
 
 
@@ -46,4 +47,25 @@ class AttendanceAdmin(admin.ModelAdmin):
 
     search_fields = (
         'enrollment__admission__student__student_name',
+    )
+
+@admin.register(SyllabusLog)
+class SyllabusLogAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'batch',
+        'trainer',
+        'date',
+        'topic_covered'
+    )
+
+    list_filter = (
+        'batch',
+        'trainer',
+        'date'
+    )
+
+    search_fields = (
+        'topic_covered',
+        'next_topic'
     )

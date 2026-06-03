@@ -92,11 +92,11 @@
 
                 <div>
                     <label>Course</label><br>
-                    <select name="course" id="id_course">
+                    <select name="course_name" id="id_course">
                         <option value="">Select Course</option>
                         {% for c in courses %}
                         <option value="{{ c.id }}" data-duration="{{ c.duration }}" data-fee="{{ c.course_fee }}">
-                            {{ c.course }}
+                            {{ c.course_name }}
                         </option>
                         {% endfor %}
                     </select>
