@@ -223,6 +223,81 @@ class SyllabusLogViewSet(viewsets.ModelViewSet):
     queryset = SyllabusLog.objects.all().order_by('-date')
     serializer_class = SyllabusLogSerializer
 
+from django.db.models import Count
+from django.utils import timezone
+
+def dashboard(request):
+
+    today = timezone.now().date()
+
+    total_students = Enrollment.objects.count()
+
+    total_batches = Batch.objects.count()
+
+    total_trainers = Trainer.objects.count()
+
+    present_today = Attendance.objects.filter(
+        attendance_date=today,
+        status="Present"
+    ).count()
+
+    absent_today = Attendance.objects.filter(
+        attendance_date=today,
+        status="Absent"
+    ).count()
+
+    late_today = Attendance.objects.filter(
+        attendance_date=today,
+        status="Late"
+    ).count()
+
+    total_attendance = Attendance.objects.filter(
+        attendance_date=today
+    ).count()
+
+    attendance_percentage = 0
+
+    if total_attendance:
+        attendance_percentage = round(
+            (present_today / total_attendance) * 100,
+            2
+        )
+
+    batch_stats = Batch.objects.annotate(
+        total=Count("enrollments")
+    )
+
+    course_stats = Course.objects.annotate(
+        total=Count("batches__enrollments")
+    )
+
+    context = {
+
+        "total_students": total_students,
+
+        "total_batches": total_batches,
+
+        "total_trainers": total_trainers,
+
+        "present_today": present_today,
+
+        "absent_today": absent_today,
+
+        "late_today": late_today,
+
+        "attendance_percentage": attendance_percentage,
+
+        "batch_stats": batch_stats,
+
+        "course_stats": course_stats,
+
+    }
+
+    return render(
+        request,
+        "attendance/dashboard.html",
+        context
+    )
 
 def batches_page(request):
 
@@ -433,7 +508,7 @@ def attendance_report_page(request):
     context = {
         "filter": attendance_filter,
         "records": attendance_filter.qs,
-        "courses": courses,
+        "courses": courses
     }
 
     return render(

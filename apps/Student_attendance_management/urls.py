@@ -69,6 +69,12 @@ path(
     ),
     path('get-batches/', views.get_batches_by_course, name='get-batches'),
 
+    path(
+    "dashboard/",
+    views.dashboard,
+    name="dashboard"
+),
+
 
     path(
         '',

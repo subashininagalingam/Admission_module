@@ -24,6 +24,11 @@
                 CSC CRM
             </h4>
 
+            <a href="{% url 'dashboard' %}">
+                <i class="fa-solid fa-chart-pie"></i>
+                Dashboard
+            </a>
+
             <a href="{% url 'batches_page' %}"
                 class="{% if request.resolver_match.url_name == 'batches_page' %}active{% endif %}">
                 <i class="fa-solid fa-layer-group"></i>
