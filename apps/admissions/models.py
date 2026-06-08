@@ -151,7 +151,9 @@ class Enrollment(models.Model):
     batch = models.ForeignKey(
     'student_attendance_management.Batch',
     on_delete=models.CASCADE,
-    related_name='enrollments'
+    related_name='enrollments',
+    null=True,
+    blank=True
     )
 
     start_date = models.DateField(null=False, blank=False)
