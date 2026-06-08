@@ -46,7 +46,8 @@ class AttendanceAdmin(admin.ModelAdmin):
     )
 
     search_fields = (
-        'enrollment__admission__student__student_name',
+        'enrollment__admission__student__first_name',
+        'enrollment__admission__student__last_name',
     )
 
 @admin.register(SyllabusLog)

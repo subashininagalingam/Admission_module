@@ -139,6 +139,17 @@ class AdmissionForm(forms.ModelForm):
 
 
 class EnrollmentForm(forms.ModelForm):
+
+    def clean_batch(self):
+        batch = self.cleaned_data['batch']
+
+        if batch.enrollments.count() >= 30:
+            raise forms.ValidationError(
+                "This batch is full. Maximum 30 students allowed."
+        )
+
+        return batch
+
     start_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
 
     def clean_start_date(self):
@@ -150,3 +161,12 @@ class EnrollmentForm(forms.ModelForm):
     class Meta:
         model = Enrollment
         fields = ['batch', 'start_date']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['batch'].widget.attrs.update({
+            'id': 'id_batch'
+        })
+
+   

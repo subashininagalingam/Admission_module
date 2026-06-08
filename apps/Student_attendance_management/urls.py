@@ -1,5 +1,6 @@
 from django.urls import path, include
 
+from . import views 
 from rest_framework.routers import DefaultRouter
 
 from .views import (
@@ -8,6 +9,7 @@ from .views import (
     TrainerViewSet,
     BatchViewSet,
     AttendanceViewSet,
+    attendance_export,
     attendance_report_page,
     batches_page,
     mark_attendance_page,
@@ -58,6 +60,15 @@ urlpatterns = [
     attendance_report_page,
     name='attendance_report'
 ),
+path('attendance-export/', views.attendance_export, name='attendance_export'),
+
+path(
+        "student-attendance-summary/<int:student_id>/",
+        views.student_attendance_summary,
+        name="student_attendance_summary"
+    ),
+    path('get-batches/', views.get_batches_by_course, name='get-batches'),
+
 
     path(
         '',

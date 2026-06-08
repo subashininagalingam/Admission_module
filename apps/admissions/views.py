@@ -1,5 +1,5 @@
 from urllib import request
-
+from django.db import models
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.core.paginator import Paginator
@@ -27,12 +27,19 @@ from reportlab.lib import colors
 
 from reportlab.platypus import Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
+
+from apps.Student_attendance_management.models import Batch
+
+
 # Create your views here.
 
 def home(request):
     return render(request, 'admissions/home.html')
 
 def student(request):
+
+    print(request.POST)
+    print("BATCH =", request.POST.get("batch"))
 
     student_form = StudentForm()
     admission_form = AdmissionForm()
@@ -51,31 +58,50 @@ def student(request):
             admission_form.is_valid() and
             enrollment_form.is_valid()
         ):
+            try:
+                with transaction.atomic():
+                    student = student_form.save()
 
-            with transaction.atomic():
+                    admission = Admission.objects.create(
+                        student=student,
+                        course_name=admission_form.cleaned_data['course_name'],
+                        status=admission_form.cleaned_data['status']
+                    )
 
-                student = student_form.save()
+                    enrollment = enrollment_form.save(commit=False)
 
-                admission = Admission.objects.create(
-                    student=student,
-                    course_name=admission_form.cleaned_data['course_name'],
-                    status=admission_form.cleaned_data['status']
-                )
+                    # Batch belongs to selected course validation
+                    if (
+                        enrollment.batch.course_id
+                        != admission.course_name_id
+                    ):
 
-                enrollment = enrollment_form.save(commit=False)
+                        messages.error(
+                            request,
+                            "Selected batch does not belong to selected course."
+                        )
 
-                enrollment.admission = admission
+                        raise ValueError(
+                            "Batch and Course mismatch"
+                        )
 
-                enrollment.save()
+                    enrollment.admission = admission
 
-                try:
+                    print("Before save")
 
-                    # USER EMAIL
+                    enrollment.save()
 
-                    send_mail(
-                        subject='🎓 Admission Confirmation - CSC Academy',
+                    print("After save")
+                
 
-                        message=f'''
+                    try:
+
+                        # USER EMAIL
+
+                        send_mail(
+                            subject='🎓 Admission Confirmation - CSC Academy',
+
+                            message=f'''
 Dear {student.first_name},
 
 Congratulations! 🎉
@@ -91,19 +117,19 @@ Best Regards,
 CSC Academy
 ''',
 
-                        from_email=settings.EMAIL_HOST_USER,
+                            from_email=settings.EMAIL_HOST_USER,
 
-                        recipient_list=[student.email],
+                            recipient_list=[student.email],
 
-                        fail_silently=False,
-                    )
+                            fail_silently=False,
+                        )
 
-                    # ADMIN EMAIL
+                        # ADMIN EMAIL
 
-                    send_mail(
-                        subject='📌 New Student Admission Alert',
+                        send_mail(
+                            subject='📌 New Student Admission Alert',
 
-                        message=f'''
+                            message=f'''
 A new student admission has been registered.
 
 Student Details
@@ -120,22 +146,24 @@ Email  : {student.email}
 Please verify the records from the admin panel.
 ''',
 
-                        from_email=settings.EMAIL_HOST_USER,
+                            from_email=settings.EMAIL_HOST_USER,
 
-                        recipient_list=['admin@gmail.com'],
+                            recipient_list=['admin@gmail.com'],
 
-                        fail_silently=False,
-                    )
+                            fail_silently=False,
+                        )
 
-                    print("MAIL SENT SUCCESS")
+                        print("MAIL SENT SUCCESS")
 
-                except Exception as e:
+                    except Exception as e:
+                        print("MAIL ERROR:", e)
 
-                    print("MAIL ERROR:", e)
+                    messages.success(request, "Student enrolled successfully!")
 
-            messages.success(request, "Student enrolled successfully!")
+                    return redirect('fee_dashboard')
+            except Exception as e:
 
-            return redirect('fee_dashboard')
+                print("ERROR:", e)
 
         else:
 
@@ -602,6 +630,8 @@ def edit_student(request, id):
 
     courses = Course.objects.all()
 
+    batches = Batch.objects.all()
+
     if request.method == 'POST':
 
         # ================= PERSONAL INFO =================
@@ -660,7 +690,8 @@ def edit_student(request, id):
         'student': student,
         'admission': admission,
         'enrollment': enrollment,
-        'courses': courses
+        'courses': courses,
+        'batches' : batches
     }
 
     return render(request, "admissions/edit_student.html", context)

@@ -40,14 +40,14 @@ class BatchSerializer(serializers.ModelSerializer):
             'student_count',
             'trainer',
             'trainer_name',
-            'is_marked'
+            'is_marked',
+            'start_date',
+            'end_date',
         ]
 
     def get_student_count(self, obj):
 
-        return Enrollment.objects.filter(
-            admission__course_name=obj.course
-        ).count()
+        return obj.student_count
 
     def get_trainer_name(self, obj):
 
@@ -59,6 +59,7 @@ class BatchSerializer(serializers.ModelSerializer):
             batch=obj,
             attendance_date=timezone.now().date()
         ).exists()
+
 
 class AttendanceSerializer(serializers.ModelSerializer):
 

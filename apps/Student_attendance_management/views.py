@@ -1,6 +1,7 @@
 from itertools import count
 from multiprocessing import context
-from urllib import request
+from tkinter.font import Font
+from urllib import request, response
 from apps.Student_attendance_management.forms import BatchForm
 
 from rest_framework import viewsets
@@ -18,6 +19,25 @@ from rest_framework import filters
 from django.db import transaction
 from rest_framework import status
 from rest_framework.views import APIView
+
+from .filters import AttendanceFilter
+
+from django.http import HttpResponse
+import csv
+
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from reportlab.platypus import SimpleDocTemplate, Table, Spacer, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+
+from django.http import JsonResponse
+
+from apps.admissions.models import Course
+
+
 
 from .models import (
     Trainer,
@@ -56,10 +76,34 @@ class BatchViewSet(viewsets.ModelViewSet):
         'course__course_name'
     ]
 
+def get_batches_by_course(request):
+    course_id = request.GET.get('course_id')
+
+    batches = Batch.objects.filter(course_id=course_id)
+
+    data = [
+        {
+        "id": b.id,
+        "batch_name": b.batch_name
+        }
+        for b in batches
+        if b.student_count < 30
+    ]
+
+    return JsonResponse(data, safe=False)
+
 class AttendanceViewSet(viewsets.ModelViewSet):
 
     queryset = Attendance.objects.all()
     serializer_class = AttendanceSerializer
+
+    filter_backends = [filters.SearchFilter]
+
+    search_fields = [
+        'enrollment__student_first_name',
+        'enrollment__student_last_name',
+        'enrollment__student_id',
+    ]
 
     def create(self, request, *args, **kwargs):
 
@@ -202,13 +246,19 @@ def mark_attendance_page(request, batch_id):
     )
 
     enrollments = Enrollment.objects.filter(
-        admission__course_name=batch.course
+        batch=batch,
+        admission__course_name=batch.course,
     )
 
     attendance_records = Attendance.objects.filter(
         batch=batch,
         attendance_date=timezone.now().date()
     )
+
+    syllabus_log = SyllabusLog.objects.filter(
+    batch=batch,
+    date=timezone.now().date()
+    ).first()
 
     attendance_map = {
         att.enrollment_id: att.status
@@ -224,7 +274,8 @@ def mark_attendance_page(request, batch_id):
         'batch': batch,
         'enrollments': enrollments,
         'attendance_map': attendance_map,
-        'remarks_map': remarks_map
+        'remarks_map': remarks_map,
+        'syllabus_log': syllabus_log,
     }
 
     return render(
@@ -368,29 +419,196 @@ def attendance_report_page(request):
         'enrollment',
         'batch'
     ).order_by('-attendance_date')
+    
+    courses = Course.objects.all()
 
-    today = timezone.now().date()
+    attendance_filter = AttendanceFilter(
+        request.GET,
+        queryset=records
+    )
+
+    print("GET:", request.GET)
+    print("COUNT:", attendance_filter.qs.count())
 
     context = {
-    "records": records, 
-    "total_students": Enrollment.objects.count(),
-    "total_batches": Batch.objects.count(),
-    "present_today": Attendance.objects.filter(
-        attendance_date=today,
-        status="Present"
-    ).count(),
-    "absent_today": Attendance.objects.filter(
-        attendance_date=today,
-        status="Absent"
-    ).count(),
-    "late_today": Attendance.objects.filter(
-        attendance_date=today,
-        status="Late"
-    ).count(),
-}
+        "filter": attendance_filter,
+        "records": attendance_filter.qs,
+        "courses": courses,
+    }
 
     return render(
         request,
         'attendance/attendance_report.html',
         context
     )
+
+
+def attendance_export(request):
+
+    records = Attendance.objects.select_related(
+    'enrollment',
+    'batch',
+    'trainer'
+).order_by('-attendance_date')
+
+    attendance_filter = AttendanceFilter(request.GET, queryset=records)
+    qs = attendance_filter.qs
+
+    export_format = request.GET.get("format")
+
+    # ================= EXCEL =================
+    if export_format == "excel":
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Attendance"
+
+        headers = ['Date', 'Student', 'Course', 'Batch', 'Status', 'Trainer']
+        ws.append(headers)
+
+        # 🪔 Temple Gold Header Style
+        header_fill = PatternFill(
+            start_color="FFC000",
+            end_color="FFC000",
+            fill_type="solid"
+        )
+
+        for cell in ws[1]:
+            cell.font = Font(bold=True)
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal="center")
+
+        for r in qs:
+            student_name = f"{r.enrollment.student.first_name} {r.enrollment.student.last_name}"
+            course_name = r.enrollment.course.course_name
+            batch_name = r.batch.batch_name
+            trainer_name = getattr(r.trainer, "name", str(r.trainer))
+
+            ws.append([
+                str(r.attendance_date),
+                student_name,
+                course_name,
+                batch_name,
+                str(r.status),
+                trainer_name
+            ])
+
+        # 📏 Column Widths (IMPORTANT: moved OUTSIDE loop)
+        column_widths = {
+            'A': 20,
+            'B': 25,
+            'C': 20,
+            'D': 18,
+            'E': 15,
+            'F': 20,
+        }
+
+        for col, width in column_widths.items():
+            ws.column_dimensions[col].width = width
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="attendance_report.xlsx"'
+
+        wb.save(response)
+        return response
+
+    # ================= PDF =================
+    elif export_format == "pdf":
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="attendance_report.pdf"'
+
+        doc = SimpleDocTemplate(response, pagesize=A4)
+
+        styles = getSampleStyleSheet()
+        title = Paragraph("🪔 Attendance Report", styles['Title'])
+
+        data = [['Date', 'Student', 'Course', 'Batch', 'Status', 'Trainer']]
+
+        for r in qs:
+            student_name = f"{r.enrollment.student.first_name} {r.enrollment.student.last_name}"
+            course_name = r.enrollment.course.course_name
+            batch_name = r.batch.batch_name
+            trainer_name = getattr(r.trainer, "name", str(r.trainer))
+
+            data.append([
+                str(r.attendance_date),
+                student_name,
+                course_name,
+                batch_name,
+                str(r.status),
+                trainer_name
+            ])
+
+        table = Table(data)
+
+        table.setStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.gold),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+
+            ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ])
+
+        elements = [
+            title,
+            Spacer(1, 12),
+            table
+        ]
+
+        doc.build(elements)
+        return response
+
+    return HttpResponse("Invalid format", status=400)
+
+
+def student_attendance_summary(request, student_id):
+
+    records = Attendance.objects.filter(
+        enrollment__admission__student_id=student_id
+    ).order_by("-attendance_date")
+
+    present = records.filter(status="Present").count()
+    absent = records.filter(status="Absent").count()
+    late = records.filter(status="Late").count()
+
+    total = records.count()
+
+    percentage = round((present / total) * 100, 2) if total else 0
+
+    student = records.first().enrollment.student if records.exists() else None
+
+    timeline = []
+
+    first_record = records.first()
+
+    for r in records:
+        timeline.append({
+            "date": r.attendance_date.strftime("%d-%m-%Y"),
+            "status": r.status
+        })
+
+    return JsonResponse({
+        "student_name": (
+            f"{student.first_name} {student.last_name}"
+            if student else ""
+        ),
+        "student_id": f"STU{student.id}",
+        "course": first_record.enrollment.course.course_name if first_record else "",
+        "batch": first_record.batch.batch_name if first_record else "",
+        "timing": first_record.batch.timing if first_record else "",
+        "photo_url": student.photo.url if student and student.photo else None,
+        "present": present,
+        "absent": absent,
+        "late": late,
+        "percentage": percentage,
+        "timeline": timeline
+    })

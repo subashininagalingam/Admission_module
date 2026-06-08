@@ -1,6 +1,6 @@
 body{
-    background:#020617;
-    color:white;
+    background:whitesmoke;
+    color:rgb(30, 42, 120);
     font-family:'Segoe UI',sans-serif;
     margin:0;
     overflow-x:hidden;
@@ -14,7 +14,8 @@ body{
     margin-left:240px;
     padding:18px 22px;
     min-height:100vh;
-    background:#020617;
+    background:whitesmoke;
+    color: rgb(30, 42, 120);
 }
 
 /* TOP HEADER */
@@ -30,7 +31,7 @@ body{
     font-size:24px;
     font-weight:700;
     margin:0;
-    color:white;
+    color:rgb(30, 42, 120);
 }
 
 .top-actions{
@@ -41,8 +42,8 @@ body{
 /* BUTTONS */
 
 .btn-back{
-    background:#1e293b;
-    color:white;
+    background:rgb(255, 202, 43);
+    color:rgb(30, 42, 120);
     border:none;
     border-radius:12px;
     padding:10px 20px;
@@ -50,8 +51,8 @@ body{
 }
 
 .btn-submit{
-    background:#2563eb;
-    color:white;
+    background:rgb(255, 202, 43);
+    color:rgb(30, 42, 120);
     border:none;
     border-radius:12px;
     padding:10px 22px;
@@ -59,22 +60,25 @@ body{
 }
 
 .btn-submit:hover{
-    background:#1d4ed8;
+    background:rgb(30, 42, 120);
+    color: rgb(255, 202, 43);
 }
 
 .btn-back:hover{
-    background:#334155;
+    background:rgb(30, 42, 120);
+    color: rgb(255, 202, 43);
 }
 
 /* STATS CARD */
 
 .stats-card{
-    background:#0f172a;
-    border:1px solid #1e293b;
+    background:rgb(30, 42, 120);
+    border:1px solid rgb(255, 202, 43);
     border-radius:18px;
     padding:16px;
     height:105px;
     transition:0.3s;
+    color: white;
 }
 
 .stats-card:hover{
@@ -83,7 +87,7 @@ body{
 }
 
 .stats-card p{
-    color:#94a3b8;
+    color:white;
     margin-bottom:10px;
     font-size:15px;
 }
@@ -98,8 +102,8 @@ body{
 
 .attendance-table{
     margin-top:28px;
-    background:#0f172a;
-    border:1px solid #1e293b;
+    background:whitesmoke;
+    border:1px solid rgb(255, 202, 43);
     border-radius:18px;
     overflow:hidden;
 }
@@ -108,24 +112,26 @@ body{
 
 .table{
     margin:0;
-    color:white;
+    color:rgb(30, 42, 120);
 }
 
 .table thead{
-    background:#172033;
+    background:whitesmoke;
+    color: rgb(255, 202, 43);
 }
 
 .table th{
-    color:#7c8aa5;
-    border-color:#243041;
+    color:rgb(255, 202, 43);
+    border-color:rgb(255, 202, 43);
     padding:12px 14px;
     font-size:13px;
     font-weight:600;
     letter-spacing:0.5px;
+    background-color:rgb(30, 42, 120) ;
 }
 
 .table td{
-    border-color:#243041;
+    border-color:rgb(30, 42, 120);
     padding:12px 14px;
     vertical-align:middle;
 }
@@ -155,9 +161,9 @@ body{
 
     opacity:0.4;
 
-    background:#1e293b;
+    background:rgb(30, 42, 120);
 
-    color:#94a3b8;
+    color:rgb(255, 202, 43);
 }
 
 .status-btn:hover{
@@ -207,9 +213,9 @@ body{
 /* INPUT */
 
 .remarks-input{
-    background:#111827;
-    border:1px solid #334155;
-    color:white;
+    background:rgb(30, 42, 120);
+    border:1px solid rgb(255, 202, 43);
+    color:rgb(255, 202, 43);
     border-radius:10px;
     height:42px;
 }
@@ -231,9 +237,9 @@ body{
 
 .attendance-modal{
 
-    background:#111827;
+    background:rgb(30, 42, 120);
 
-    border:1px solid #334155;
+    border:1px solid rgb(255, 202, 43);
 
     border-radius:20px;
 
@@ -259,6 +265,10 @@ body{
     margin:auto;
 
     font-size:28px;
+}
+
+.modal-dialog{
+    max-width:650px;
 }
 
 .summary-box{
@@ -358,12 +368,228 @@ body{
     border:2px solid #334155;
 }
 
-/* RESPONSIVE */
+.summary-box{
+    display:flex;
+    gap:15px;
+    margin-top:20px;
+}
 
-@media(max-width:992px){
+.summary-card{
+    flex:1;
+    padding:20px;
+    border-radius:14px;
+    text-align:center;
+}
 
-    .main-content{
-        margin-left:0;
-        padding:20px;
+.summary-card h3{
+    font-size:28px;
+    margin:0;
+}
+
+.present-card{
+    background:#052e16;
+    border:1px solid #166534;
+    color:#22c55e;
+}
+
+.absent-card{
+    background:#450a0a;
+    border:1px solid #991b1b;
+    color:#ef4444;
+}
+
+.late-card{
+    background:#78350f;
+    border:1px solid #d97706;
+    color:#f59e0b;
+}
+
+.attendance-modal .form-control{
+    background:white;
+    border:1px solid #334155;
+    color:rgb(30, 42, 120);
+}
+
+.attendance-modal .form-control:focus{
+    background:#1e293b;
+    color:white;
+    border-color:#2563eb;
+    box-shadow:none;
+}
+
+.btn-submit{
+    background:linear-gradient(
+        135deg,
+        rgb(255, 202, 43),
+        rgb(255, 202, 43)
+    );
+    border:none;
+    font-weight:600;
+    padding:12px 25px;
+}
+
+.btn-submit:hover{
+    transform:translateY(-2px);
+}
+
+.attendance-modal .form-label{
+    display: block;
+    text-align: left;
+    color:white
+
+}
+
+/* =========================
+   TABLET
+========================= */
+@media (max-width: 1024px) {
+
+    .main-content {
+        margin-left: 0;
+        padding: 15px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .top-actions {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .search-box {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+@media (max-width: 768px) {
+
+    body {
+        padding-left: 0;
+        zoom: 100%;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 10px;
+    }
+
+    .page-title {
+        font-size: 20px;
+        line-height: 1.4;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .top-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .search-box {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .btn-back,
+    .btn-submit {
+        width: 100%;
+    }
+
+    /* Stats Cards */
+    .stats-card {
+        margin-bottom: 15px;
+    }
+
+    .stats-card h2 {
+        font-size: 28px;
+    }
+
+    /* Table Scroll */
+    .attendance-table {
+        overflow-x: auto;
+        border-radius: 12px;
+    }
+
+    .table {
+        min-width: 850px;
+    }
+
+    .table th,
+    .table td {
+        white-space: nowrap;
+    }
+
+    /* Status Buttons */
+    .status-btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 6px;
+        margin-right: 0;
+    }
+
+    /* Modal */
+    .modal-dialog {
+        margin: 10px;
+        max-width: 100%;
+    }
+
+    .summary-box {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .summary-card {
+        width: 100%;
+    }
+}
+
+
+/* =========================
+   SMALL MOBILE
+========================= */
+@media (max-width: 480px) {
+
+    .page-title {
+        font-size: 18px;
+    }
+
+    .student-avatar,
+    .student-avatar-img {
+        width: 32px;
+        height: 32px;
+    }
+
+    .student-info span {
+        font-size: 13px;
+    }
+
+    .stats-card {
+        padding: 12px;
+        height: auto;
+    }
+
+    .stats-card h2 {
+        font-size: 24px;
+    }
+
+    .summary-card h3 {
+        font-size: 22px;
+    }
+
+    .attendance-modal .form-control {
+        font-size: 14px;
     }
 }

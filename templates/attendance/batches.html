@@ -6,212 +6,7 @@
 {% endblock title %}
 
 {% block extra_css %}
-<style>
-    body {
-        background-color: #070b17;
-        color: white;
-        font-family: Segoe UI;
-        zoom: 90%;
-        padding-left: 10px;
-    }
-
-    .main-content {
-        margin-left: 250px;
-        padding: 15px 25px;
-        zoom: 0.9;
-        /* optional */
-    }
-
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .top-card {
-        background: #0f172a;
-        border: 1px solid #1e293b;
-        border-radius: 18px;
-        padding: 20px;
-    }
-
-    /* Icon Box */
-    .icon-box {
-        width: 42px;
-        height: 42px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 15px;
-        font-size: 18px;
-    }
-
-    /* Total Batches */
-    .icon-batches {
-        background: #172554;
-        color: #60a5fa;
-    }
-
-    /* Attendance Marked */
-    .icon-marked {
-        background: #052e16;
-        color: #22c55e;
-    }
-
-    /* Not Marked */
-    .icon-notmarked {
-        background: #450a0a;
-        color: #ef4444;
-    }
-
-    /* Total Students */
-    .icon-students {
-        background: #451a03;
-        color: #f59e0b;
-    }
-
-    .top-card p {
-        color: #64748b;
-        margin-bottom: 4px;
-    }
-
-    .top-card h2 {
-        color: white;
-        font-size: 42px;
-        font-weight: 700;
-        margin: 0;
-    }
-
-    .batch-card {
-        background: #0f172a;
-        border: 1px solid #1e293b;
-        border-radius: 18px;
-        padding: 18px;
-        margin-top: 25px;
-        transition: 0.3s;
-    }
-
-    .batch-card:hover {
-        transform: translateY(-4px);
-        border-color: #2563eb;
-    }
-
-    .status {
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-    .marked {
-        background: #123d2b;
-        color: #22c55e;
-    }
-
-    .not-marked {
-        background: #3b1d1d;
-        color: #ef4444;
-    }
-
-    .btn-attendance {
-        width: 100%;
-        background: #2563eb;
-        border: none;
-        padding: 12px;
-        border-radius: 12px;
-        color: white;
-        font-weight: 600;
-        margin-top: 20px;
-    }
-
-    .btn-attendance:hover {
-        background: #1d4ed8;
-    }
-
-    .marked {
-        background: #123d2b;
-        color: #22c55e;
-    }
-
-    .not-marked {
-        background: #4a2a05;
-        color: #f59e0b;
-    }
-
-    .attendance-modal {
-        background: #111827;
-        border: 1px solid #334155;
-        border-radius: 20px;
-        color: white;
-    }
-
-    .attendance-modal label {
-        color: #cbd5e1;
-        margin-bottom: 6px;
-        font-size: 14px;
-    }
-
-    .remarks-input {
-        background: #1e293b;
-        border: 1px solid #334155;
-        color: white;
-        border-radius: 10px;
-        height: 48px;
-    }
-
-    .remarks-input:focus {
-        background: #1e293b;
-        color: white;
-        border-color: #2563eb;
-        box-shadow: none;
-    }
-
-    .modal-content {
-        border-radius: 20px;
-    }
-
-    .modal-dialog {
-        display: flex;
-        align-items: center;
-        min-height: 100vh;
-    }
-
-    .form-select {
-        background: #1e293b;
-        color: white;
-        border: 1px solid #334155;
-    }
-
-    .form-select option {
-        background: #1e293b;
-        color: white;
-    }
-
-    .modal-body {
-        padding: 30px;
-    }
-
-    .search-box {
-        position: relative;
-        width: 400px;
-        margin-left: 250px;
-    }
-
-    .search-box i {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #888;
-    }
-
-    .search-box input {
-        width: 100%;
-        padding: 10px 10px 10px 40px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'attendance/css/batches.css' %}">
 {% endblock extra_css %}
 
 {% block content %}
@@ -308,6 +103,18 @@
 
                             <div class="grid gap-3">
                                 <div class="mb-3">
+                                    <label>Start Date</label>
+                                    {{ form.start_date }}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label>End Date</label>
+                                    {{ form.end_date }}
+                                </div>
+                            </div>
+
+                            <div class="grid gap-3">
+                                <div class="mb-3">
                                     <label>Start Time</label>
                                     {{ form.start_time }}
                                 </div>
@@ -395,7 +202,13 @@
                         document.getElementById('id_end_time').value,
 
                     trainer:
-                        document.getElementById('id_trainer').value || null
+                        document.getElementById('id_trainer').value || null,
+                    
+                    start_date:
+                        document.getElementById('id_start_date').value,
+                    
+                    end_date:
+                        document.getElementById('id_end_date').value,
                 })
             })
 
@@ -412,12 +225,15 @@
                 alert('Batch Created Successfully')
             }
             else {
-
-                const error = await res.text()
-
-                console.log("SERVER ERROR:", error)
-
-                alert(error)
+                try {
+                    const error = await res.json();
+                    console.log("SERVER ERROR:", error);
+                    alert(JSON.stringify(error, null, 2));
+                } catch {
+                    const error = await res.text();
+                    console.log("SERVER ERROR:", error);
+                    alert(error);
+                }
             }
         })
 
@@ -453,6 +269,16 @@
 
         batches.forEach(batch => {
 
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const startDate = new Date(batch.start_date);
+
+            const isUpcoming = startDate > today;
+
+
+            console.log(batch);
+
             totalStudents += batch.student_count
 
             if (batch.is_marked) markedCount++
@@ -460,7 +286,7 @@
 
             container.innerHTML += `
         <div class="col-lg-4 col-md-6">
-            <div class="batch-card" id="batch-${batch.id}">
+            <div class="batch-card ${isUpcoming ? 'upcoming' : ''}" id="batch-${batch.id}">
 
                 <div class="d-flex justify-content-between">
                     <h4>${batch.course_name} ${batch.batch_name}</h4>
@@ -475,9 +301,15 @@
                 <p>Total Students: <strong>${batch.student_count}</strong></p>
                 <p>Trainer: <strong>${batch.trainer_name || 'No Trainer'}</strong></p>
 
-                <button class="btn-attendance" onclick="window.location.href='/api/mark-attendance/${batch.id}/'">
-                ${batch.is_marked ? 'Update Entry' : 'Mark Attendance'}
-                </button>
+                ${isUpcoming
+    ? `<button class="btn-attendance" disabled>
+            Upcoming
+       </button>`
+    : `<button class="btn-attendance"
+            onclick="window.location.href='/api/mark-attendance/${batch.id}/'">
+            ${batch.is_marked ? 'Update Entry' : 'Mark Attendance'}
+       </button>`
+}
 
             </div>
         </div>
@@ -532,6 +364,23 @@
 
             loadBatches(this.value);
         });
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+    document.querySelectorAll('input[type="date"], input[type="time"]')
+        .forEach(input => {
+
+            input.addEventListener("click", function () {
+
+                if (this.showPicker) {
+                    this.showPicker();
+                }
+
+            });
+
+        });
+
+});
 
 </script>
 

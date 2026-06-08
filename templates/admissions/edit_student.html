@@ -12,586 +12,582 @@
 {% block content %}
 <div class="edit-container">
 
-<form method="POST" enctype="multipart/form-data" id="studentForm" novalidate>
-    {% csrf_token %}
+    <form method="POST" enctype="multipart/form-data" id="studentForm" novalidate>
+        {% csrf_token %}
 
-    <!-- PERSONAL INFO -->
-    <div class="personal-info">
+        <!-- PERSONAL INFO -->
+        <div class="personal-info">
 
-        <h3 class="section-title">
-            <i class="fas fa-user"></i> Personal Information
-        </h3>
+            <h3 class="section-title">
+                <i class="fas fa-user"></i> Personal Information
+            </h3>
 
-        <div class="personal-grid">
+            <div class="personal-grid">
 
-            <div>
-                <label>First Name</label>
-                <input type="text" name="first_name" value="{{ student.first_name }}"  required >
-                <span class="error" id="firstNameError"></span>
+                <div>
+                    <label>First Name</label>
+                    <input type="text" name="first_name" value="{{ student.first_name }}" required>
+                    <span class="error" id="firstNameError"></span>
+                </div>
+
+                <div>
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" value="{{ student.last_name }}" required>
+                    <span class="error" id="lastNameError"></span>
+                </div>
+
+                <div>
+                    <label>Email</label>
+                    <input type="email" name="email" value="{{ student.email }}" required>
+                    <span class="error" id="emailError"></span>
+                </div>
+
+                <div>
+                    <label>Phone</label>
+                    <input type="text" name="phone_no" value="{{ student.phone_no }}" maxlength="10" required>
+                    <span class="error" id="phoneError"></span>
+                </div>
+
+                <div>
+                    <label>Date of Birth</label>
+                    <input type="date" name="dob" value="{{ student.dob|date:'Y-m-d' }}" required>
+                </div>
+
+                <div>
+                    <label>Gender</label>
+                    <select name="gender" required>
+
+                        <option value="M" {% if student.gender == "M" %}selected{% endif %}>
+                            Male
+                        </option>
+
+                        <option value="F" {% if student.gender == "F" %}selected{% endif %}>
+                            Female
+                        </option>
+
+                        <option value="O" {% if student.gender == "O" %}selected{% endif %}>
+                            Others
+                        </option>
+
+                    </select>
+                </div>
+
+                <div>
+                    <label>Guardian Name</label>
+                    <input type="text" name="guardian_name" value="{{ student.guardian_name }}" required>
+                    <span class="error" id="guardianNameError"></span>
+                </div>
+
+                <div>
+                    <label>Guardian Phone</label>
+                    <input type="text" name="guardian_phone_no" value="{{ student.guardian_phone_no }}" maxlength="10"
+                        required>
+                    <span class="error" id="guardianPhoneError"></span>
+                </div>
+
             </div>
 
-            <div>
-                <label>Last Name</label>
-                <input type="text" name="last_name" value="{{ student.last_name }}" required > 
-                <span class="error" id="lastNameError"></span>       
-            </div>
+            <div class="address-grid">
+                <label>Address</label>
 
-            <div>
-                <label>Email</label>
-                <input type="email" name="email" value="{{ student.email }}" required >  
-                <span class="error" id="emailError"></span>   
-            </div>
-
-            <div>
-                <label>Phone</label>
-                <input type="text" name="phone_no" value="{{ student.phone_no }}" maxlength="10"   required>
-                <span class="error" id="phoneError"></span>
-            </div>
-
-            <div>
-                <label>Date of Birth</label>
-                <input type="date" name="dob" value="{{ student.dob|date:'Y-m-d' }}" required>
-            </div>
-
-            <div>
-                <label>Gender</label>
-                <select name="gender" required>
-
-                    <option value="M" {% if student.gender == "M" %}selected{% endif %}>
-                        Male
-                    </option>
-
-                    <option value="F" {% if student.gender == "F" %}selected{% endif %}>
-                        Female
-                    </option>
-
-                    <option value="O" {% if student.gender == "O" %}selected{% endif %}>
-                        Others
-                    </option>
-
-                </select>
-            </div>
-
-            <div>
-                <label>Guardian Name</label>
-                <input type="text" name="guardian_name" value="{{ student.guardian_name }}"   required>
-                <span class="error" id="guardianNameError"></span>
-            </div>
-
-            <div>
-                <label>Guardian Phone</label>
-                <input type="text" name="guardian_phone_no" value="{{ student.guardian_phone_no }}" maxlength="10"   required>
-                <span class="error" id="guardianPhoneError"></span>
+                <textarea name="address">{{ student.address }}</textarea>
             </div>
 
         </div>
 
-        <div class="address-grid">
-            <label>Address</label>
+        <!-- COURSE -->
+        <div class="personal-info">
 
-            <textarea name="address">{{ student.address }}</textarea>
-        </div>
+            <h3 class="section-title">
+                <i class="fas fa-book"></i> Course Enrollment
+            </h3>
 
-    </div>
+            <div class="course-grid">
 
-    <!-- COURSE -->
-    <div class="personal-info">
+                <div>
+                    <label>Course</label>
+                    <select name="course_name" id="id_course" required>
 
-        <h3 class="section-title">
-            <i class="fas fa-book"></i> Course Enrollment
-        </h3>
+                        <option value="">Select Course</option>
 
-        <div class="course-grid">
+                        {% for c in courses %}
+                        <option value="{{ c.id }}" {% if admission.course_name_id == c.id %}selected{% endif %}
+                            data-duration="{{ c.duration }}" data-fee="{{ c.course_fee }}">
 
-            <div>
-                <label>Course</label>
-                <select name="course" id="id_course" required>
+                            {{ c.course_name }}
 
-                    <option value="">Select Course</option>
+                        </option>
+                        {% endfor %}
 
-                    {% for c in courses %}
-                    <option value="{{ c.id }}" {% if admission.course.id == c.id %}selected{% endif %}
-                        data-duration="{{ c.duration }}" data-fee="{{ c.course_fee }}">
+                    </select>
+                </div>
 
-                        {{ c.course }}
+                <div>
 
+                    <label>Batch</label>
+
+                    <select name="batch" class="form-control">
+                    <option value="">Select Batch</option>
+
+                    {% for batch in batches %}
+                    <option value="{{ batch.id }}"
+                    {% if enrollment.batch_id == batch.id %}selected{% endif %}>
+                    {{ batch.batch_name }}
                     </option>
                     {% endfor %}
+                    </select>
+                </div>
 
-                </select>
+                <div>
+                    <label>Duration</label>
+                    <input type="text" id="duration" value="{{ admission.course.duration }}" readonly required>
+                </div>
+
+                <div>
+                    <label>Start Date</label>
+                    <input type="date" name="start_date" value="{{ enrollment.start_date|date:'Y-m-d' }}" required>
+                </div>
+
+                <div>
+                    <label>Course Fee</label>
+                    <input type="text" id="fee" value="{{ admission.course.course_fee }}" readonly required>
+                </div>
+
+                <div>
+                    <label>Payment Status</label>
+                    <select name="payment_status" required>
+
+                        <option value="Paid" {% if enrollment.payment_status == "Paid" %}selected{% endif %}>
+                            Paid
+                        </option>
+
+                        <option value="Pending" {% if enrollment.payment_status == "Pending" %}selected{% endif %}>
+                            Pending
+                        </option>
+
+                        <option value="Partial" {% if enrollment.payment_status == "Partial" %}selected{% endif %}>
+                            Partial
+                        </option>
+
+                    </select>
+                </div>
+
             </div>
 
-            <div>
+            <label>Admission Status</label>
 
-            <label>Batch</label>
+            <div class="admission-status">
 
-            <select name="batch" required>
+                <label class="status-option">
+                    <input type="radio" name="status" value="enquiry" {% if admission.status == "enquiry" %}checked{% endif %} required>
+                    <span class="status enquiry">Enquiry</span>
+                </label>
 
-                <option value="Batch A" {% if enrollment.batch == "Batch A" %}selected{% endif %}>
-                    Batch A
-                </option>
+                <label class="status-option">
+                    <input type="radio" name="status" value="confirmed" {% if admission.status == "confirmed" %}checked{% endif %} required>
+                    <span class="status confirmed">Confirmed</span>
+                </label>
 
-                <option value="Batch B" {% if enrollment.batch == "Batch B" %}selected{% endif %}>
-                    Batch B
-                </option>
+                <label class="status-option">
+                    <input type="radio" name="status" value="enrolled" {% if admission.status == "enrolled" %}checked{% endif %}>
+                    <span class="status enrolled">Enrolled</span>
+                </label>
 
-                <option value="Batch C" {% if enrollment.batch == "Batch C" %}selected{% endif %}>
-                    Batch C
-                </option>
-
-            </select>
-            </div>
-
-            <div>
-                <label>Duration</label>
-                <input type="text" id="duration" value="{{ admission.course.duration }}" readonly required>
-            </div>
-
-            <div>
-                <label>Start Date</label>
-                <input type="date" name="start_date" value="{{ enrollment.start_date|date:'Y-m-d' }}" required>
-            </div>
-
-            <div>
-                <label>Course Fee</label>
-                <input type="text" id="fee" value="{{ admission.course.course_fee }}" readonly required>
-            </div>
-
-            <div>
-                <label>Payment Status</label>
-                <select name="payment_status" required>
-
-                    <option value="Paid" {% if enrollment.payment_status == "Paid" %}selected{% endif %}>
-                        Paid
-                    </option>
-
-                    <option value="Pending" {% if enrollment.payment_status == "Pending" %}selected{% endif %}>
-                        Pending
-                    </option>
-
-                    <option value="Partial" {% if enrollment.payment_status == "Partial" %}selected{% endif %}>
-                        Partial
-                    </option>
-
-                </select>
-            </div>
-
-        </div>
-
-        <label>Admission Status</label>
-
-        <div class="admission-status">
-
-            <label class="status-option">
-                <input type="radio" name="status" value="enquiry" {% if admission.status == "enquiry" %}checked{% endif %} required>
-                <span class="status enquiry">Enquiry</span>
-            </label>
-
-            <label class="status-option">
-                <input type="radio" name="status" value="confirmed" {% if admission.status == "confirmed" %}checked{% endif %} required>
-                <span class="status confirmed">Confirmed</span>
-            </label>
-
-            <label class="status-option">
-                <input type="radio" name="status" value="enrolled" {% if admission.status == "enrolled" %}checked{% endif %}>
-                <span class="status enrolled">Enrolled</span>
-            </label> 
-
-        </div>
-
-    </div>
-
-    <!-- DOCUMENT -->
-    <div class="personal-info">
-
-        <h3 class="section-title-details">
-            <i class="fas fa-file-alt"></i> Document Upload
-        </h3>
-
-        <div class="document-grid">
-
-            <div>
-                <label>Student Photo</label>
-                <input type="file" name="photo" accept="image/*">
-
-                {% if student.photo %}
-                <a href="{{ student.photo.url }}" target="_blank" class="file-link">
-                    Current: {{ student.photo.name|cut:"student_photos/" }}
-                </a>
-                {% endif %}
-            </div>
-
-            <div>
-                <label>ID Proof</label>
-                <input type="file" name="id_proof" accept="application/pdf">
-
-                {% if student.id_proof %}
-                <a href="{{ student.id_proof.url }}" target="_blank" class="file-link">
-                    Current: {{ student.id_proof.name|cut:"id_proofs/" }}
-                </a>
-                {% endif %}
-            </div>
-
-            <div>
-                <label>Certificate</label>
-                <input type="file" name="certificate" accept="application/pdf">
-
-                {% if student.certificate %}
-                <a href="{{ student.certificate.url }}" target="_blank" class="file-link">
-                    Current: {{ student.certificate.name|cut:"certificates/" }}
-                </a>
-                {% endif %}
             </div>
 
         </div>
-    </div>
 
-    <!-- BUTTON -->
-    <div class="form-btn">
+        <!-- DOCUMENT -->
+        <div class="personal-info">
 
-        <button type="submit">
-            <i class="fas fa-save"></i>
-            Update Student
-        </button>
+            <h3 class="section-title-details">
+                <i class="fas fa-file-alt"></i> Document Upload
+            </h3>
 
-    </div>
+            <div class="document-grid">
 
-</form>
+                <div>
+                    <label>Student Photo</label>
+                    <input type="file" name="photo" accept="image/*">
+
+                    {% if student.photo %}
+                    <a href="{{ student.photo.url }}" target="_blank" class="file-link">
+                        Current: {{ student.photo.name|cut:"student_photos/" }}
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label>ID Proof</label>
+                    <input type="file" name="id_proof" accept="application/pdf">
+
+                    {% if student.id_proof %}
+                    <a href="{{ student.id_proof.url }}" target="_blank" class="file-link">
+                        Current: {{ student.id_proof.name|cut:"id_proofs/" }}
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label>Certificate</label>
+                    <input type="file" name="certificate" accept="application/pdf">
+
+                    {% if student.certificate %}
+                    <a href="{{ student.certificate.url }}" target="_blank" class="file-link">
+                        Current: {{ student.certificate.name|cut:"certificates/" }}
+                    </a>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+
+        <!-- BUTTON -->
+        <div class="form-btn">
+
+            <button type="submit">
+                <i class="fas fa-save"></i>
+                Update Student
+            </button>
+
+        </div>
+
+    </form>
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
 
-    const form = document.getElementById("studentForm");
+        const form = document.getElementById("studentForm");
 
-    // COURSE AUTO FILL
-    const courseSelect = document.getElementById("id_course");
+        // COURSE AUTO FILL
+        const courseSelect = document.getElementById("id_course");
 
-    courseSelect.addEventListener("change", function () {
-        
-        const selected = this.options[this.selectedIndex];
+        courseSelect.addEventListener("change", function () {
 
-        document.getElementById("duration").value =
-            selected.dataset.duration || "";
+            const selected = this.options[this.selectedIndex];
 
-        document.getElementById("fee").value =
-            selected.dataset.fee || "";
+            document.getElementById("duration").value =
+                selected.dataset.duration || "";
 
-    });
+            document.getElementById("fee").value =
+                selected.dataset.fee || "";
 
-    // INITIAL LOAD
-    courseSelect.dispatchEvent(new Event("change"));
+        });
 
-    // INPUTS
-    const firstName = document.getElementsByName("first_name")[0];
-    const lastName = document.getElementsByName("last_name")[0];
-    const email = document.getElementsByName("email")[0];
-    const phone = document.getElementsByName("phone_no")[0];
-    const guardianName = document.getElementsByName("guardian_name")[0];
-    const guardianPhone = document.getElementsByName("guardian_phone_no")[0];
+        // INITIAL LOAD
+        courseSelect.dispatchEvent(new Event("change"));
 
-    const dob = document.getElementsByName("dob")[0];
-    const gender = document.getElementsByName("gender")[0];
+        // INPUTS
+        const firstName = document.getElementsByName("first_name")[0];
+        const lastName = document.getElementsByName("last_name")[0];
+        const email = document.getElementsByName("email")[0];
+        const phone = document.getElementsByName("phone_no")[0];
+        const guardianName = document.getElementsByName("guardian_name")[0];
+        const guardianPhone = document.getElementsByName("guardian_phone_no")[0];
 
-    const batch = document.getElementsByName("batch")[0];
-    const startDate = document.getElementsByName("start_date")[0];
+        const dob = document.getElementsByName("dob")[0];
+        const gender = document.getElementsByName("gender")[0];
 
-    // REGEX
-    const nameRegex = /^[A-Za-z ]+$/;
-    const emailRegex = /^[\w\.-]+@[\w\.-]+\.\w+$/;
-    const phoneRegex = /^\d{10}$/;
+        const batch = document.getElementsByName("batch")[0];
+        const startDate = document.getElementsByName("start_date")[0];
 
-    // SHOW ERROR
-    function showError(input, message) {
+        // REGEX
+        const nameRegex = /^[A-Za-z ]+$/;
+        const emailRegex = /^[\w\.-]+@[\w\.-]+\.\w+$/;
+        const phoneRegex = /^\d{10}$/;
 
-        removeError(input);
+        // SHOW ERROR
+        function showError(input, message) {
 
-        let error = document.createElement("span");
+            removeError(input);
 
-        error.className = "custom-error";
-        error.style.color = "red";
-        error.style.fontSize = "13px";
-        error.style.display = "block";
-        error.style.marginTop = "4px";
+            let error = document.createElement("span");
 
-        error.innerText = message;
+            error.className = "custom-error";
+            error.style.color = "red";
+            error.style.fontSize = "13px";
+            error.style.display = "block";
+            error.style.marginTop = "4px";
 
-        input.parentElement.appendChild(error);
-    }
+            error.innerText = message;
 
-    // REMOVE ERROR
-    function removeError(input) {
-
-        let oldError =
-            input.parentElement.querySelector(".custom-error");
-
-        if (oldError) {
-            oldError.remove();
-        }
-    }
-
-    // TEXT VALIDATION
-    function validateField(input, regex, emptyMsg, invalidMsg) {
-
-        let value = input.value.trim();
-
-        removeError(input);
-
-        if (value === "") {
-
-            showError(input, emptyMsg);
-            return false;
+            input.parentElement.appendChild(error);
         }
 
-        if (!regex.test(value)) {
+        // REMOVE ERROR
+        function removeError(input) {
 
-            showError(input, invalidMsg);
-            return false;
-        }
+            let oldError =
+                input.parentElement.querySelector(".custom-error");
 
-        return true;
-    }
-
-    // DOB VALIDATION
-    function validateDOB() {
-
-        let selectedDate = new Date(dob.value);
-
-        let today = new Date();
-
-        today.setHours(0,0,0,0);
-
-        removeError(dob);
-
-        if (dob.value === "") {
-
-            showError(dob, "DOB is required");
-            return false;
-        }
-
-        if (selectedDate >= today) {
-
-            showError(dob, "Select past date only");
-            return false;
-        }
-
-        return true;
-    }
-
-    // START DATE VALIDATION
-    function validateStartDate() {
-
-        let selectedDate = new Date(startDate.value);
-
-        let today = new Date();
-
-        today.setHours(0,0,0,0);
-
-        removeError(startDate);
-
-        if (startDate.value === "") {
-
-            showError(startDate, "Start date is required");
-            return false;
-        }
-
-        if (selectedDate < today) {
-
-            showError(startDate, "Select today or future date only");
-            return false;
-        }
-
-        return true;
-    }
-
-    // GENDER VALIDATION
-    function validateGender() {
-
-        removeError(gender);
-
-        if (gender.value === "") {
-
-            showError(gender, "Please select a gender");
-            return false;
-        }
-
-        return true;
-    }
-
-    // BATCH VALIDATION
-    function validateBatch() {
-
-        removeError(batch);
-
-        if (batch.value === "") {
-
-            showError(batch, "Please select a batch");
-            return false;
-        }
-
-        return true;
-    }
-
-    // LIVE VALIDATION
-    firstName.addEventListener("input", function () {
-
-        validateField(
-            firstName,
-            nameRegex,
-            "First name is required",
-            "Only alphabets allowed"
-        );
-    });
-
-    lastName.addEventListener("input", function () {
-
-        validateField(
-            lastName,
-            nameRegex,
-            "Last name is required",
-            "Only alphabets allowed"
-        );
-    });
-
-    email.addEventListener("input", function () {
-
-        validateField(
-            email,
-            emailRegex,
-            "Email is required",
-            "Enter valid email"
-        );
-    });
-
-    phone.addEventListener("input", function () {
-
-        validateField(
-            phone,
-            phoneRegex,
-            "Phone number is required",
-            "Enter valid 10 digit number"
-        );
-    });
-
-    guardianName.addEventListener("input", function () {
-
-        validateField(
-            guardianName,
-            nameRegex,
-            "Guardian name is required",
-            "Only alphabets allowed"
-        );
-    });
-
-    guardianPhone.addEventListener("input", function () {
-
-        validateField(
-            guardianPhone,
-            phoneRegex,
-            "Guardian phone is required",
-            "Enter valid 10 digit number"
-        );
-    });
-
-    dob.addEventListener("change", function () {
-        validateDOB();
-    });
-
-    startDate.addEventListener("change", function () {
-        validateStartDate();
-    });
-
-    gender.addEventListener("change", function () {
-        validateGender();
-    });
-
-    batch.addEventListener("change", function () {
-        validateBatch();
-    });
-
-    // SUBMIT
-    form.addEventListener("submit", function (e) {
-
-        let isValid = true;
-        let firstInvalidField = null;
-
-        function check(validationFn, input) {
-
-            if (!validationFn()) {
-
-                isValid = false;
-
-                if (!firstInvalidField) {
-                    firstInvalidField = input;
-                }
+            if (oldError) {
+                oldError.remove();
             }
         }
 
-        check(() => validateField(
-            firstName,
-            nameRegex,
-            "First name is required",
-            "Only alphabets allowed"
-        ), firstName);
+        // TEXT VALIDATION
+        function validateField(input, regex, emptyMsg, invalidMsg) {
 
-        check(() => validateField(
-            lastName,
-            nameRegex,
-            "Last name is required",
-            "Only alphabets allowed"
-        ), lastName);
+            let value = input.value.trim();
 
-        check(() => validateField(
-            email,
-            emailRegex,
-            "Email is required",
-            "Enter valid email"
-        ), email);
+            removeError(input);
 
-        check(() => validateField(
-            phone,
-            phoneRegex,
-            "Phone number is required",
-            "Enter valid 10 digit number"
-        ), phone);
+            if (value === "") {
 
-        check(() => validateField(
-            guardianName,
-            nameRegex,
-            "Guardian name is required",
-            "Only alphabets allowed"
-        ), guardianName);
+                showError(input, emptyMsg);
+                return false;
+            }
 
-        check(() => validateField(
-            guardianPhone,
-            phoneRegex,
-            "Guardian phone is required",
-            "Enter valid 10 digit number"
-        ), guardianPhone);
+            if (!regex.test(value)) {
 
-        check(validateDOB, dob);
+                showError(input, invalidMsg);
+                return false;
+            }
 
-        check(validateStartDate, startDate);
-
-        check(validateGender, gender);
-
-        check(validateBatch, batch);
-
-        if (!isValid) {
-
-            e.preventDefault();
-
-            firstInvalidField.scrollIntoView({
-                behavior: "smooth",
-                block: "center"
-            });
-
-            firstInvalidField.focus();
+            return true;
         }
 
-    });
+        // DOB VALIDATION
+        function validateDOB() {
 
-});
+            let selectedDate = new Date(dob.value);
+
+            let today = new Date();
+
+            today.setHours(0, 0, 0, 0);
+
+            removeError(dob);
+
+            if (dob.value === "") {
+
+                showError(dob, "DOB is required");
+                return false;
+            }
+
+            if (selectedDate >= today) {
+
+                showError(dob, "Select past date only");
+                return false;
+            }
+
+            return true;
+        }
+
+        // START DATE VALIDATION
+        function validateStartDate() {
+
+            let selectedDate = new Date(startDate.value);
+
+            let today = new Date();
+
+            today.setHours(0, 0, 0, 0);
+
+            removeError(startDate);
+
+            if (startDate.value === "") {
+
+                showError(startDate, "Start date is required");
+                return false;
+            }
+
+            if (selectedDate < today) {
+
+                showError(startDate, "Select today or future date only");
+                return false;
+            }
+
+            return true;
+        }
+
+        // GENDER VALIDATION
+        function validateGender() {
+
+            removeError(gender);
+
+            if (gender.value === "") {
+
+                showError(gender, "Please select a gender");
+                return false;
+            }
+
+            return true;
+        }
+
+        // BATCH VALIDATION
+        function validateBatch() {
+
+            removeError(batch);
+
+            if (batch.value === "") {
+
+                showError(batch, "Please select a batch");
+                return false;
+            }
+
+            return true;
+        }
+
+        // LIVE VALIDATION
+        firstName.addEventListener("input", function () {
+
+            validateField(
+                firstName,
+                nameRegex,
+                "First name is required",
+                "Only alphabets allowed"
+            );
+        });
+
+        lastName.addEventListener("input", function () {
+
+            validateField(
+                lastName,
+                nameRegex,
+                "Last name is required",
+                "Only alphabets allowed"
+            );
+        });
+
+        email.addEventListener("input", function () {
+
+            validateField(
+                email,
+                emailRegex,
+                "Email is required",
+                "Enter valid email"
+            );
+        });
+
+        phone.addEventListener("input", function () {
+
+            validateField(
+                phone,
+                phoneRegex,
+                "Phone number is required",
+                "Enter valid 10 digit number"
+            );
+        });
+
+        guardianName.addEventListener("input", function () {
+
+            validateField(
+                guardianName,
+                nameRegex,
+                "Guardian name is required",
+                "Only alphabets allowed"
+            );
+        });
+
+        guardianPhone.addEventListener("input", function () {
+
+            validateField(
+                guardianPhone,
+                phoneRegex,
+                "Guardian phone is required",
+                "Enter valid 10 digit number"
+            );
+        });
+
+        dob.addEventListener("change", function () {
+            validateDOB();
+        });
+
+        startDate.addEventListener("change", function () {
+            validateStartDate();
+        });
+
+        gender.addEventListener("change", function () {
+            validateGender();
+        });
+
+        batch.addEventListener("change", function () {
+            validateBatch();
+        });
+
+        // SUBMIT
+        form.addEventListener("submit", function (e) {
+
+            let isValid = true;
+            let firstInvalidField = null;
+
+            function check(validationFn, input) {
+
+                if (!validationFn()) {
+
+                    isValid = false;
+
+                    if (!firstInvalidField) {
+                        firstInvalidField = input;
+                    }
+                }
+            }
+
+            check(() => validateField(
+                firstName,
+                nameRegex,
+                "First name is required",
+                "Only alphabets allowed"
+            ), firstName);
+
+            check(() => validateField(
+                lastName,
+                nameRegex,
+                "Last name is required",
+                "Only alphabets allowed"
+            ), lastName);
+
+            check(() => validateField(
+                email,
+                emailRegex,
+                "Email is required",
+                "Enter valid email"
+            ), email);
+
+            check(() => validateField(
+                phone,
+                phoneRegex,
+                "Phone number is required",
+                "Enter valid 10 digit number"
+            ), phone);
+
+            check(() => validateField(
+                guardianName,
+                nameRegex,
+                "Guardian name is required",
+                "Only alphabets allowed"
+            ), guardianName);
+
+            check(() => validateField(
+                guardianPhone,
+                phoneRegex,
+                "Guardian phone is required",
+                "Enter valid 10 digit number"
+            ), guardianPhone);
+
+            check(validateDOB, dob);
+
+            check(validateStartDate, startDate);
+
+            check(validateGender, gender);
+
+            check(validateBatch, batch);
+
+            if (!isValid) {
+
+                e.preventDefault();
+
+                firstInvalidField.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+
+                firstInvalidField.focus();
+            }
+
+        });
+
+    });
 </script>
 
 <script>
@@ -604,7 +600,7 @@
     ];
 
     // TEXT ONLY
-    nameFields.forEach(function(input) {
+    nameFields.forEach(function (input) {
 
         input.addEventListener("input", function () {
 
@@ -622,7 +618,7 @@
     ];
 
     // NUMBER ONLY
-    phoneFields.forEach(function(input) {
+    phoneFields.forEach(function (input) {
 
         input.addEventListener("input", function () {
 

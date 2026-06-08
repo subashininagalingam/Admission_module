@@ -5,6 +5,7 @@ from django.db.models import Sum
 from django.core.validators import MinValueValidator 
 from decimal import Decimal
 from cloudinary.models import CloudinaryField
+from django.core.exceptions import ValidationError
 # from apps.Student_attendance_management.models import Batch
 
 
@@ -134,6 +135,15 @@ class Admission(models.Model):
     def __str__(self):
         return f"{self.student} - {self.course_name}"
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields =['student', 'course_name'],
+                name = 'unique_student_course'
+            )
+        ]
+
+
 
 class Enrollment(models.Model):
     admission = models.OneToOneField(Admission, on_delete=models.CASCADE, related_name='enrollment')
@@ -151,6 +161,25 @@ class Enrollment(models.Model):
         ('Pending', 'Pending'),
         ('Partial','Partial')
     ], default='Pending')
+
+    def clean(self):
+        if not self.admission_id:
+            return
+
+        if self.batch.course_id != self.admission.course_name_id:
+            raise ValidationError(
+                "Batch course and admission course must match."
+            )
+        
+        if self.batch.enrollments.exclude(pk=self.pk).count() >= self.batch.max_students:
+            raise ValidationError(
+                "Batch is full. No seats available."
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+
+        super().save(*args, **kwargs)
 
     @property
     def student(self):

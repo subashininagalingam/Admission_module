@@ -17,13 +17,13 @@
     <div class="page-header">
 
         <h2 class="page-title">
-            Mark Attendance — {{ batch.batch_name }}
+            Mark Attendance — {{ batch.course.course_name }} {{ batch.batch_name }}
         </h2>
 
         <div class="top-actions">
 
             <div class="search-box mb-3">
-                <i class="fas fa-search"></i>
+                <i class="fas fa-search" style="color: gray; "></i>
                 <input type="text" id="searchInput" class="form-control"
                     placeholder="Search Student Name or Student ID...">
             </div>
@@ -89,6 +89,7 @@
 
         </table>
 
+
     </div>
 
 </div>
@@ -101,7 +102,6 @@
         <div class="modal-content attendance-modal">
 
             <div class="modal-header border-0">
-                <h5 class="modal-title">Submit Attendance</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
@@ -111,43 +111,63 @@
 
                 <div class="summary-box">
 
-                    <div>
+                    <div class="summary-card present-card">
                         <h3 id="modalPresent">0</h3>
                         <span>Present</span>
                     </div>
 
-                    <div>
+                    <div class="summary-card absent-card">
                         <h3 id="modalAbsent">0</h3>
                         <span>Absent</span>
                     </div>
 
-                    <div>
+                    <div class="summary-card late-card">
                         <h3 id="modalLate">0</h3>
                         <span>Late</span>
                     </div>
 
-                </div>
+                </div><br>
 
+                <div class="attendance-overview">
+                    <h5 style="color: rgb(255, 202, 43);">
+                        Attendance Status :
+                        <span id="attendancePercentage"></span>
+                    </h5>
+                </div>
                 <div class="mt-4">
 
                     <div class="mb-3">
                         <label class="form-label">Topic Covered *</label>
-                        <input type="text" id="topicCovered" class="form-control" placeholder="Enter topic covered">
+                        <input type="text" id="topicCovered" class="form-control" placeholder="Enter topic covered"
+                            value="{{ syllabus_log.topic_covered|default:'' }}">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Duration (Minutes) *</label>
-                        <input type="number" id="duration" class="form-control" placeholder="Duration in minutes">
+                        <label class="form-label">Duration *</label>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <input type="number" id="durationHours" class="form-control" placeholder="Hours"
+                                    min="0">
+                            </div>
+
+                            <div class="col-6">
+                                <input type="number" id="durationMinutes" class="form-control" placeholder="Minutes"
+                                    min="0" max="59">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Next Topic</label>
-                        <input type="text" id="nextTopic" class="form-control" placeholder="Enter next topic">
+                        <input type="text" id="nextTopic" class="form-control" placeholder="Enter next topic"
+                            value="{{ syllabus_log.next_topic|default:'' }}">
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Trainer Notes</label>
-                        <textarea id="trainerNotes" class="form-control" rows="3"></textarea>
+                        <textarea id="trainerNotes" class="form-control"
+                            rows="3">{{ syllabus_log.trainer_notes|default:'' }}</textarea>
                     </div>
 
                 </div>
@@ -174,6 +194,8 @@
 
 <script>
 
+    console.log("Script Loaded");
+
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -190,6 +212,20 @@
     }
 
     const csrftoken = getCookie('csrftoken');
+
+    function getAvatarColor(index) {
+
+        const colors = [
+            "#2563eb",
+            "#16a34a",
+            "#dc2626",
+            "#9333ea",
+            "#ea580c",
+            "#0891b2"
+        ];
+
+        return colors[index % colors.length];
+    }
 
     let attendanceData = [];
 
@@ -354,8 +390,13 @@
         const topicCovered =
             document.getElementById("topicCovered").value;
 
-        const duration =
-            document.getElementById("duration").value;
+        const hours =
+            parseInt(document.getElementById("durationHours").value) || 0;
+
+        const minutes =
+            parseInt(document.getElementById("durationMinutes").value) || 0;
+
+        const duration = (hours * 60) + minutes;
 
         const nextTopic =
             document.getElementById("nextTopic").value;
@@ -368,8 +409,8 @@
             return;
         }
 
-        if (!duration || duration <= 0) {
-            alert("Valid duration is required");
+        if (duration <= 0) {
+            alert("Enter valid duration");
             return;
         }
 
@@ -401,7 +442,10 @@
     console.log(result);
 
     if (response.ok) {
-        alert("Success");
+        alert("Attendance submitted successfully");
+
+        window.location.href = "{% url 'attendance_report' %}";
+
     } else {
         alert(JSON.stringify(result));
     }
@@ -409,7 +453,7 @@
 } catch (error) {
         console.error(error);
     }
-    }
+}
 
     function searchStudents(searchText) {
 
@@ -462,21 +506,42 @@
 
     function openAttendanceModal() {
 
-        // ✅ VALIDATION BEFORE OPEN MODAL
         for (let data of attendanceData) {
             if (
                 (data.status === 'Absent' || data.status === 'Late') &&
                 (!data.remarks || data.remarks.trim() === '')
             ) {
                 alert("Remarks required for Absent / Late");
-                return; // stop modal open
+                return;
             }
         }
 
-        // open modal manually
-        const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+        updateCounts();
+
+        document.getElementById('modalPresent').innerText =
+            document.getElementById('presentCount').innerText;
+
+        document.getElementById('modalAbsent').innerText =
+            document.getElementById('absentCount').innerText;
+
+        document.getElementById('modalLate').innerText =
+            document.getElementById('lateCount').innerText;
+
+        const modal = new bootstrap.Modal(
+            document.getElementById('attendanceModal')
+        );
+
         modal.show();
     }
+
+    const percentage =
+        Math.round(
+            (parseInt(document.getElementById('presentCount').innerText)
+                / students.length) * 100
+        );
+
+    document.getElementById('attendancePercentage').innerText =
+        percentage + "% Present";
 
 </script>
 

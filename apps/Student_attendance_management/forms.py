@@ -11,13 +11,15 @@ class BatchForm(forms.ModelForm):
             'timing',
             'start_time',
             'end_time',
+            'start_date',
+            'end_date',
             'trainer',
         ]
 
         widgets = {
-            'batch_name': forms.Select(attrs={
+            'batch_name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter Batch Name'
+                'placeholder': 'Eg: June 2026',
             }),
 
             'course': forms.Select(attrs={
@@ -26,6 +28,16 @@ class BatchForm(forms.ModelForm):
 
             'timing': forms.Select(attrs={
                 'class': 'form-control'
+            }),
+
+            'start_date':forms.DateInput(attrs={
+                'class':'form-control',
+                'type':'date'
+            }),
+
+            'end_date':forms.DateInput(attrs={
+                'class':'form-control',
+                'type':'date'
             }),
 
             'start_time': forms.TimeInput(attrs={

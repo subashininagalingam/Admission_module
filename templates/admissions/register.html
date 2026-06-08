@@ -95,7 +95,7 @@
                     <select name="course_name" id="id_course">
                         <option value="">Select Course</option>
                         {% for c in courses %}
-                        <option value="{{ c.id }}" data-duration="{{ c.duration }}" data-fee="{{ c.course_fee }}">
+                        <option value="{{ c.id }}" data-duration="{{ c.duration }}" data-fee="{{ c.course_fee }}" >
                             {{ c.course_name }}
                         </option>
                         {% endfor %}
@@ -104,7 +104,9 @@
 
                 <div>
                     <label>Batch</label><br>
+
                     {{ enrollment_form.batch }}
+
                 </div>
 
                 <div>
@@ -113,7 +115,7 @@
                 </div>
 
                 <div>
-                    <label>Start Date</label><br>
+                    <label>Admission Date</label><br>
                     {{ enrollment_form.start_date }}
 
                 </div>
@@ -802,6 +804,46 @@
 
     });
 
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    console.log("JS Loaded");
+
+    const course = document.getElementById("id_course");
+    const batch = document.getElementById("id_batch");
+
+    course.addEventListener("change", function () {
+
+        let courseId = this.value;
+
+        console.log("Selected Course:", courseId);
+
+        batch.innerHTML = '<option>Loading...</option>';
+
+        fetch(`/api/get-batches/?course_id=${courseId}`)
+            .then(res => res.json())
+            .then(data => {
+
+                console.log("Batch Data:", data);
+
+                batch.innerHTML = '<option value="">Select Batch</option>';
+
+                data.forEach(item => {
+                    batch.innerHTML += `
+                        <option value="${item.id}">
+                            ${item.batch_name}
+                        </option>
+                    `;
+                });
+
+            })
+            .catch(err => console.log(err));
+
+    });
+
+});
 </script>
 
 {% endblock %}
