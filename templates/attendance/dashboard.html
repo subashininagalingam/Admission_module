@@ -13,63 +13,108 @@
 <div class="main-content">
 
     <div class="topbar">
-        <input type="text" placeholder="Search here...">
+        <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search...">
+        </div>
 
         <div class="profile">
-            <img src="avatar.jpg">
+            <img src="avatar.jpg" alt="photo">
             <div>
                 <h4>Admin</h4>
                 <p>Institute Admin</p>
             </div>
         </div>
-    </div>
+    </div><br>
 
-    <h1>Attendance Dashboard</h1>
+    <h2>Attendance Dashboard</h2><br>
 
     <div class="stats-grid">
 
-        <div class="card">
-            <div class="card-head">
-                <h3>Total Students</h3>
-                <i class="fa-solid fa-user-graduate"></i>
-            </div>
-
-            <h2>520</h2>
-            <p>+12% This Month</p>
-        </div>
-
-        <div class="card">
-            <div class="card-head">
-                <h3>Present Today</h3>
-                <i class="fa-solid fa-circle-check"></i>
-            </div>
-
-            <h2>480</h2>
-            <p>92% Attendance</p>
-        </div>
-
-        <div class="card">
-            <div class="card-head">
-                <h3>Absent Today</h3>
-                <i class="fa-solid fa-circle-xmark"></i>
-            </div>
-
-            <h2>40</h2>
-            <p>-3% Compared Yesterday</p>
-        </div>
-
-        <div class="card">
-            <div class="card-head">
-                <h3>Staff Present</h3>
-                <i class="fa-solid fa-users"></i>
-            </div>
-
-            <h2>35</h2>
-            <p>Full Staff Available</p>
-        </div>
-
+    <div class="card">
+    <div style="display: flex;">
+    <div class="icon-box icon-students">
+        <i class="fa-solid fa-users"></i>
     </div>
+    <div style="margin-left: 5px;">
+    <h3>Total Students</h3></div>
+    </div>
+    <h2 id="totalCount">{{ total }}</h2>
+    <p>
+    {% if total_percentage >= 0 %}
+        +{{ total_percentage }}%
+    {% else %}
+        {{ total_percentage }}%
+    {% endif %}
+    vs last month
+</p>
+</div>
+
+<div class="card">
+    <div style="display: flex;">
+    <div class="icon-box icon-marked">
+        <i class="fa-solid fa-check"></i>
+    </div>
+    <div style="margin-left: 5px;">
+    <h3>Present Today</h3></div>
+    </div>
+    <h2 id="presentCount">{{ present }}</h2>
+    <p>{{ present_change }}%</p>
+</div>
+
+<div class="card">
+    <div style="display: flex;">
+    <div class="icon-box icon-notmarked">
+        <i class="fa-solid fa-xmark"></i>
+    </div>
+    <div style="margin-left: 5px;">
+    <h3>Absent Today</h3></div>
+    </div>
+    <h2 id="absentCount">{{ absent }}</h2>
+    <p>{{ absent_change }}%</p>
+</div>
+
+<div class="card">
+    <h3>Late Today</h3>
+    <h2 id="lateCount">{{ late }}</h2>
+    <p>{{ late_change }}%</p>
+</div>
 
 </div>
+
+</div>
+
+<script>
+let timeout = null;
+
+const searchInput = document.getElementById("searchInput");
+
+searchInput.addEventListener("input", function () {
+
+    console.log("Typing:", this.value);
+
+    clearTimeout(timeout);
+
+    const query = this.value;
+
+    timeout = setTimeout(() => {
+        liveSearch(query);
+    }, 300);
+});
+
+async function liveSearch(query) {
+
+    const res = await fetch(`/api/dashboard-api/?search=${encodeURIComponent(query)}`);
+
+    const data = await res.json();
+
+    console.log(data);
+
+    document.getElementById("totalCount").innerText = data.total;
+    document.getElementById("presentCount").innerText = data.present;
+    document.getElementById("absentCount").innerText = data.absent;
+    document.getElementById("lateCount").innerText = data.late;
+}
+</script>
 
 {% endblock %}

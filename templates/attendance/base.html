@@ -21,10 +21,11 @@
         <div class="sidebar" id="navLinks">
 
             <h4 class="logo-heading">
-                CSC CRM
+                CSC
             </h4>
 
-            <a href="{% url 'dashboard' %}">
+            <a href="{% url 'dashboard' %}"
+                class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <i class="fa-solid fa-chart-pie"></i>
                 Dashboard
             </a>
@@ -46,7 +47,7 @@
                 Attendance History
             </a>
 
-            <a href="#">
+            <a href="#"> 
                 <i class="fa-solid fa-user-xmark"></i>
                 Absent Tracker
             </a>

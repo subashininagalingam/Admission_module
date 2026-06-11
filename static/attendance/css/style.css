@@ -115,11 +115,16 @@ font-size: 16px;
         top:15px;
         left:15px;
         z-index:1001;
-        background:#2563eb;
+        background:rgb(30, 42, 120);
         color:white;
         padding:10px 12px;
         border-radius:8px;
         cursor:pointer;
+    }
+
+    .logo-heading{
+        position: relative;
+        left: 50px;
     }
 
     .sidebar{
@@ -144,6 +149,11 @@ font-size: 16px;
 
     .sidebar.show{
         left:0;
+    }
+
+    .logo-heading{
+        position: relative;
+        left: 50px;
     }
 
     .main-content{

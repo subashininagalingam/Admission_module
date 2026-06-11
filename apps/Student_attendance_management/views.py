@@ -1,6 +1,6 @@
 from itertools import count
 from multiprocessing import context
-# from tkinter.font import Font
+from tkinter.font import Font
 from urllib import request, response
 from apps.Student_attendance_management.forms import BatchForm
 
@@ -34,6 +34,13 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 
 from django.http import JsonResponse
+from django.db.models import Count
+from django.utils import timezone
+
+from django.http import JsonResponse
+from django.db.models import Q
+from django.utils import timezone
+from datetime import timedelta
 
 from apps.admissions.models import Course
 
@@ -223,81 +230,149 @@ class SyllabusLogViewSet(viewsets.ModelViewSet):
     queryset = SyllabusLog.objects.all().order_by('-date')
     serializer_class = SyllabusLogSerializer
 
-from django.db.models import Count
-from django.utils import timezone
+
+def dashboard_api(request):
+
+    search = request.GET.get("search", "")
+    today = timezone.now().date()
+
+    batches = Batch.objects.all()
+
+    if search:
+        batches = batches.filter(
+            Q(batch_name__icontains=search) |
+            Q(course__course_name__icontains=search) |
+            Q(trainer__trainer_name__icontains=search) |
+            Q(timing__icontains=search)
+        )
+
+    enrollments = Enrollment.objects.filter(batch__in=batches)
+
+    attendance_qs = Attendance.objects.filter(
+        enrollment__in=enrollments,
+        attendance_date=today
+    )
+
+    return JsonResponse({
+        "total": enrollments.count(),
+        "present": attendance_qs.filter(status="Present").count(),
+        "absent": attendance_qs.filter(status="Absent").count(),
+        "late": attendance_qs.filter(status="Late").count(),
+    })
 
 def dashboard(request):
 
+    search = request.GET.get("search", "")
     today = timezone.now().date()
+    yesterday = today - timedelta(days=1)
 
-    total_students = Enrollment.objects.count()
+    batches = Batch.objects.all()
 
-    total_batches = Batch.objects.count()
-
-    total_trainers = Trainer.objects.count()
-
-    present_today = Attendance.objects.filter(
-        attendance_date=today,
-        status="Present"
-    ).count()
-
-    absent_today = Attendance.objects.filter(
-        attendance_date=today,
-        status="Absent"
-    ).count()
-
-    late_today = Attendance.objects.filter(
-        attendance_date=today,
-        status="Late"
-    ).count()
-
-    total_attendance = Attendance.objects.filter(
-        attendance_date=today
-    ).count()
-
-    attendance_percentage = 0
-
-    if total_attendance:
-        attendance_percentage = round(
-            (present_today / total_attendance) * 100,
-            2
+    if search:
+        batches = batches.filter(
+            Q(batch_name__icontains=search) |
+            Q(course__course_name__icontains=search) |
+            Q(trainer__trainer_name__icontains=search) |
+            Q(timing__icontains=search)
         )
 
-    batch_stats = Batch.objects.annotate(
-        total=Count("enrollments")
+    enrollments = Enrollment.objects.filter(
+        batch__in=batches
     )
 
-    course_stats = Course.objects.annotate(
-        total=Count("batches__enrollments")
+    total= enrollments.count()
+
+    attendance_qs = Attendance.objects.filter(
+        enrollment__in=enrollments,
+        attendance_date=today
     )
+
+  
+
+    today = timezone.now().date()
+
+    # Current Month
+    current_month_students = Enrollment.objects.filter(
+    start_date__year=today.year,
+    start_date__month=today.month
+    ).count()
+
+    # Previous Month
+    if today.month == 1:
+        prev_month = 12
+        prev_year = today.year - 1
+    else:
+        prev_month = today.month - 1
+        prev_year = today.year
+
+    previous_month_students = Enrollment.objects.filter(
+    start_date__year=prev_year,
+    start_date__month=prev_month
+    ).count()
+
+    # Percentage
+    if previous_month_students > 0:
+        total_percentage = round(
+            ((current_month_students - previous_month_students) / previous_month_students) * 100, 2
+        )
+    else:
+        total_percentage = 100 if current_month_students > 0 else 0
+
+    present = attendance_qs.filter(status="Present").count()
+    absent = attendance_qs.filter(status="Absent").count()
+    late = attendance_qs.filter(status="Late").count()
+
+    attendance_marked = attendance_qs.count()
+
+    yesterday_qs = Attendance.objects.filter(
+    enrollment__in=enrollments,
+    attendance_date=yesterday
+    )
+
+    yesterday_present = yesterday_qs.filter(status="Present").count()
+    yesterday_absent = yesterday_qs.filter(status="Absent").count()
+    yesterday_late = yesterday_qs.filter(status="Late").count()
+
+    percentage = round((present / total) * 100, 2) if total else 0
+
+    present_change = 0
+    absent_change = 0
+    late_change = 0
+
+    if yesterday_present:
+        present_change = round(
+            ((present - yesterday_present) / yesterday_present) * 100, 2
+        )
+
+    if yesterday_absent:
+        absent_change = round(
+            ((absent - yesterday_absent) / yesterday_absent) * 100, 2
+        )
+
+    if yesterday_late:
+        late_change = round(
+            ((late - yesterday_late) / yesterday_late) * 100, 2
+        )
 
     context = {
-
-        "total_students": total_students,
-
-        "total_batches": total_batches,
-
-        "total_trainers": total_trainers,
-
-        "present_today": present_today,
-
-        "absent_today": absent_today,
-
-        "late_today": late_today,
-
-        "attendance_percentage": attendance_percentage,
-
-        "batch_stats": batch_stats,
-
-        "course_stats": course_stats,
-
+        "present": present,
+        "absent": absent,
+        "late": late,
+        "total": total,
+        "percentage": percentage,
+        "attendance_marked": attendance_marked,
+        "present_change": present_change,
+        "absent_change": absent_change,
+        "late_change": late_change,
+        "total_percentage":total_percentage,
     }
 
     return render(
         request,
-        "attendance/dashboard.html",
+        'attendance/dashboard.html',
         context
     )
+
 
 def batches_page(request):
 

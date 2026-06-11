@@ -51,6 +51,6 @@ class BatchForm(forms.ModelForm):
             }),
 
             'trainer': forms.Select(attrs={
-                'class': 'form-select'
+                'class': 'form-select',
             }),
         }

@@ -8,6 +8,20 @@ body{
     zoom:90%;
 }
 
+::placeholder{
+    position: relative;
+    right: 8px;
+}
+
+i{
+    position: relative;
+    bottom: 3px;
+}
+
+.btn-back{
+    height: 48px;
+}
+
 /* MAIN CONTENT */
 
 .main-content{
@@ -82,7 +96,6 @@ body{
 }
 
 .stats-card:hover{
-    border-color:#2563eb;
     transform:translateY(-3px);
 }
 
@@ -269,6 +282,10 @@ body{
 
 .modal-dialog{
     max-width:650px;
+}
+
+.modal-backdrop.show {
+    opacity: 0 !important;
 }
 
 .summary-box{
@@ -505,7 +522,7 @@ body{
 
     .btn-back,
     .btn-submit {
-        width: 100%;
+        width: 50%;
     }
 
     /* Stats Cards */

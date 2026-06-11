@@ -45,6 +45,46 @@ class BatchSerializer(serializers.ModelSerializer):
             'end_date',
         ]
 
+    def validate(self, data):
+
+        trainer = data.get('trainer')
+        timing = data.get('timing')
+
+        if trainer:
+            batch_exists = Batch.objects.filter(
+                trainer=trainer,
+                timing=timing
+            ).exists()
+
+            if batch_exists:
+                raise serializers.ValidationError({
+                    "trainer": [
+                        "Trainer already assigned to another batch in this time slot."
+                    ]
+                })
+            
+        today = timezone.now().date()
+
+        start_date = data.get("start_date")
+        end_date = data.get("end_date")
+
+        if start_date <= today:
+            raise serializers.ValidationError({
+                "start_date": "Start date must be a future date."
+            })
+
+        if end_date <= today:
+            raise serializers.ValidationError({
+                "end_date": "End date must be a future date."
+            })
+
+        if end_date < start_date:
+            raise serializers.ValidationError({
+                "end_date": "End date cannot be before start date."
+            })
+
+        return data
+
     def get_student_count(self, obj):
 
         return obj.student_count
@@ -59,6 +99,8 @@ class BatchSerializer(serializers.ModelSerializer):
             batch=obj,
             attendance_date=timezone.now().date()
         ).exists()
+    
+
 
 
 class AttendanceSerializer(serializers.ModelSerializer):

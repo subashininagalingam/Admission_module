@@ -29,51 +29,25 @@ router.register(r'syllabus-logs',SyllabusLogViewSet)
 
 urlpatterns = [
 
-    path(
-        'batches-page/',
-        batches_page,
-        name='batches_page'
-    ),
+    path('batches-page/',batches_page,name='batches_page'),
 
-    path(
-    'mark-attendance/<int:batch_id>/',
-    mark_attendance_page,
-    name='mark_attendance_page'
-    ),
+    path('mark-attendance/<int:batch_id>/',mark_attendance_page,name='mark_attendance_page'),
 
     path('today-attendance/<int:batch_id>/', today_attendance_summary),
 
-    path(
-    'attendance/bulk/',
-    bulk_attendance,
-    name='bulk_attendance'
-    ),
+    path('attendance/bulk/',bulk_attendance,name='bulk_attendance'),
 
-    path(
-        "attendance/submit/",
-        AttendanceSubmitAPIView.as_view(),
-        name="attendance-submit"
-    ),
+    path("attendance/submit/",AttendanceSubmitAPIView.as_view(),name="attendance-submit"),
 
-    path(
-    'attendance-report/',
-    attendance_report_page,
-    name='attendance_report'
-),
-path('attendance-export/', views.attendance_export, name='attendance_export'),
+    path('attendance-report/',attendance_report_page,name='attendance_report'),
+    path('attendance-export/', views.attendance_export, name='attendance_export'),
 
-path(
-        "student-attendance-summary/<int:student_id>/",
-        views.student_attendance_summary,
-        name="student_attendance_summary"
-    ),
+    path("student-attendance-summary/<int:student_id>/",views.student_attendance_summary,name="student_attendance_summary"),
     path('get-batches/', views.get_batches_by_course, name='get-batches'),
 
-    path(
-    "dashboard/",
-    views.dashboard,
-    name="dashboard"
-),
+    path("dashboard/",views.dashboard,name="dashboard"),
+
+    path("dashboard-api/",views.dashboard_api,name="dashboard_api"),
 
 
     path(

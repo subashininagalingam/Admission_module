@@ -181,7 +181,7 @@ class Batch(models.Model):
 class Attendance(models.Model):
 
     class AttendanceStatus(models.TextChoices):
-
+        
         PRESENT = 'Present', 'Present'
         ABSENT = 'Absent', 'Absent'
         LATE = 'Late', 'Late'
@@ -206,7 +206,7 @@ class Attendance(models.Model):
 
     status = models.CharField(
         max_length=10,
-        choices=AttendanceStatus.choices
+        choices=[('', 'Select Status')] +AttendanceStatus.choices
     )
 
     attendance_date = models.DateField(default=timezone.now) 

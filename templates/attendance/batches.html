@@ -21,7 +21,7 @@
                 <i class="fas fa-search"></i>
                 <input type="text" id="searchInput" placeholder="Search by batch, course, trainer, timing...">
             </div>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#batchModal">+ New Batch</button>
+            <button class="btn " data-bs-toggle="modal" data-bs-target="#batchModal">+ New Batch</button>
         </div>
 
         <!-- TOP CARDS -->
@@ -105,11 +105,13 @@
                                 <div class="mb-3">
                                     <label>Start Date</label>
                                     {{ form.start_date }}
+                                    <div id="startDateError" class="text-danger mt-1"></div>
                                 </div>
 
                                 <div class="mb-3">
                                     <label>End Date</label>
                                     {{ form.end_date }}
+                                    <div id="endDateError" class="text-danger mt-1"></div>
                                 </div>
                             </div>
 
@@ -128,17 +130,18 @@
                             <div class="mb-3">
                                 <label>Trainer</label>
                                 {{ form.trainer }}
+                                <div id="trainerError" class="text-danger mt-1"></div>
                             </div>
 
                         </div>
 
                         <div class="modal-footer border-secondary">
 
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <button type="button" class="btn" id="btn-cancel" data-bs-dismiss="modal">
                                 Cancel
                             </button>
 
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn" id="btn-cancel">
                                 Create Batch
                             </button>
 
@@ -174,6 +177,43 @@
         .addEventListener('submit', async function (e) {
 
             e.preventDefault()
+
+            document.getElementById("startDateError").innerText = "";
+            document.getElementById("endDateError").innerText = "";
+            document.getElementById("trainerError").innerText = "";
+
+            const startDate = document.getElementById('id_start_date').value;
+            const endDate = document.getElementById('id_end_date').value;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            let hasError = false;
+
+            if (start <= today) {
+                document.getElementById("startDateError").innerText =
+                "Start date must be a future date";
+                hasError = true;
+            }
+
+            if (end <= today) {
+                document.getElementById("endDateError").innerText =
+                "End date must be a future date";
+                hasError = true;
+            }
+
+            if (end < start) {
+                document.getElementById("endDateError").innerText =
+                "End date must be greater than start date";
+                hasError = true;
+            }
+
+            if (hasError) {
+                return;
+            }
 
             const res = await fetch('/api/batches/', {
 
@@ -228,7 +268,13 @@
                 try {
                     const error = await res.json();
                     console.log("SERVER ERROR:", error);
-                    alert(JSON.stringify(error, null, 2));
+
+                    if (error.trainer) {
+                        document.getElementById("trainerError").innerText =
+                        error.trainer[0];
+                    } else {
+                        alert(JSON.stringify(error, null, 2));
+                    }
                 } catch {
                     const error = await res.text();
                     console.log("SERVER ERROR:", error);

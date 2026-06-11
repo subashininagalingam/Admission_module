@@ -25,6 +25,10 @@ body {
     padding: 20px;
 }
 
+.top-card:hover {
+    transform: translateY(-4px);
+}
+
 /* Icon Box */
 .icon-box {
     width: 42px;
@@ -127,11 +131,13 @@ p{
 
 .marked {
     background: #123d2b;
+    margin-top: 6px;
     color: #22c55e;
 }
 
 .not-marked {
     background: #4a2a05;
+    margin-top: 6px;
     color: #f59e0b;
 }
 
@@ -180,12 +186,16 @@ p{
 }
 
 .form-select option {
-    background: rgb(30, 42, 120);
-    color: white;
+    background: white;
+    color: black;
 }
 
 .modal-body {
     padding: 30px;
+}
+
+.modal-backdrop.show {
+    opacity: 0 !important;
 }
 
 input[type="date"],
@@ -218,6 +228,26 @@ input[type="time"] {
     opacity: 0.6;
     pointer-events: none;
     cursor: not-allowed;
+}
+
+.btn{
+    background-color: rgb(255, 202, 43);
+    color: rgb(30, 42, 120);
+}
+
+.btn:hover{
+    background-color: rgb(30, 42, 120);
+    color: rgb(255, 202, 43);
+}
+
+#btn-cancel{
+    background-color: rgb(255, 202, 43);
+    color: rgb(30, 42, 120);
+}
+
+#btn-cancel:hover{
+    background-color: rgb(15, 40, 199);
+    color:rgb(255, 202, 43) ;
 }
 
 /* ==========================
@@ -275,8 +305,8 @@ input[type="time"] {
     }
 
     /* Button */
-    .btn-primary {
-        width: 100%;
+    .btn {
+        width: 40%;
     }
 
     /* Cards */

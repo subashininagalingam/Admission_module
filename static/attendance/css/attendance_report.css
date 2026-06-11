@@ -334,6 +334,24 @@ a{
 .down{
     height:40px;
     padding:0 20px;
+    background-color: rgb(255, 202, 43);
+    color: rgb(30, 42, 120);
+    border-radius: 10px;
+}
+
+.down:hover{
+    background-color: rgb(30, 42, 120);
+    color: rgb(255, 202, 43);
+}
+
+.btn{
+    background-color: rgb(255, 202, 43);
+    color: rgb(30, 42, 120);
+}
+
+.btn:hover{
+    background-color: rgb(30, 42, 120);
+    color: rgb(255, 202, 43);
 }
 /* =========================
    TABLET
@@ -379,7 +397,7 @@ a{
     /* Filters */
 
     .filter-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .filter-form input,
@@ -407,7 +425,7 @@ a{
     }
 
     .down {
-        width: 100%;
+        width: 50%;
     }
 
     .download-form{
@@ -416,7 +434,7 @@ a{
 
     .format-box,
     .down{
-        width:100%;
+        width:50%;
     }
 
 
