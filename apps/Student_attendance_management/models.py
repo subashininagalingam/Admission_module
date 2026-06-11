@@ -326,3 +326,85 @@ class SyllabusLog(models.Model):
 
     def __str__(self):
         return f"{self.batch.batch_name} | {self.topic_covered} | {self.date}"
+    
+
+class AbsentTracker(models.Model):
+
+    ALERT_CHOICES = [
+        ('Low', 'Low'),
+        ('Medium', 'Medium'),
+        ('Critical', 'Critical'),
+    ]
+
+    NOTIFICATION_CHOICES = [
+        ('SMS Pending', 'SMS Pending'),
+        ('Dispatched', 'Dispatched'),
+    ]
+
+    enrollment = models.OneToOneField(
+        'admissions.Enrollment',
+        on_delete=models.CASCADE
+    )
+
+    total_absences = models.IntegerField(
+        default=0
+    )
+
+    consecutive_absences = models.IntegerField(
+        default=0
+    )
+
+    attendance_percentage = models.FloatField(
+        default=100
+    )
+
+    alert_level = models.CharField(
+        max_length=10,
+        choices=ALERT_CHOICES,
+        default='Low'
+    )
+
+    observation_notes = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    notification_status = models.CharField(
+        max_length=20,
+        choices=NOTIFICATION_CHOICES,
+        default='SMS Pending'
+    )
+
+    attendance_status = models.CharField(
+        max_length=20,
+        default='Complete'
+    )
+
+    admin_notes = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    notification_sent = models.BooleanField(
+        default=False
+    )
+
+    last_notified_at = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    def __str__(self):
+
+        return (
+            f"{self.enrollment.student.first_name}"
+            f" - {self.alert_level}"
+        )

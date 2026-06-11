@@ -18,48 +18,55 @@
 
 <body>
 
-        <div class="sidebar" id="navLinks">
+    <div class="sidebar" id="navLinks">
 
-            <h4 class="logo-heading">
-                CSC
-            </h4>
+        <h4 class="logo-heading">
+            CSC
+        </h4>
 
-            <a href="{% url 'dashboard' %}"
-                class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                <i class="fa-solid fa-chart-pie"></i>
-                Dashboard
-            </a>
+        <a href="{% url 'dashboard' %}"
+            class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <i class="fa-solid fa-chart-pie"></i>
+            Dashboard
+        </a>
 
-            <a href="{% url 'batches_page' %}"
-                class="{% if request.resolver_match.url_name == 'batches_page' %}active{% endif %}">
-                <i class="fa-solid fa-layer-group"></i>
-                Batches
-            </a>
+        <a href="{% url 'batches_page' %}"
+            class="{% if request.resolver_match.url_name == 'batches_page' %}active{% endif %}">
+            <i class="fa-solid fa-layer-group"></i>
+            Batches
+        </a>
 
-            <!-- <a href="#">
+        <!-- <a href="#">
                 <i class="fa-solid fa-square-check"></i>
                 Mark Attendance
             </a> -->
 
-            <a href="{% url 'attendance_report' %}"
-                class="{% if request.resolver_match.url_name == 'attendance_report' %}active{% endif %}">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                Attendance History
-            </a>
+        <a href="{% url 'attendance_report' %}"
+            class="{% if request.resolver_match.url_name == 'attendance_report' %}active{% endif %}">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            Attendance History
+        </a>
 
-            <a href="#"> 
-                <i class="fa-solid fa-user-xmark"></i>
-                Absent Tracker
-            </a>
+        <a href="{% url 'absent_tracker' %}"
+            class="{% if request.resolver_match.url_name == 'absent_tracker' %}active{% endif %}">
+            <i class="fa-solid fa-user-xmark"></i>
+            Absent Tracker
+        </a>
 
-            <a href="#">
-                <i class="fa-solid fa-book"></i>
-                Syllabus Log
-            </a>
+        <a href="{% url 'low_attendance_alerts' %}"
+            class="{% if request.resolver_match.url_name == 'low_attendance_alerts' %}active{% endif %}">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            Low Attendance Alerts
+        </a>
+        <a href="{% url 'reports' %}" class="{% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+            <i class="fa-solid fa-chart-line"></i>
+            Reports & Analytics
+        </a>
 
-        </div>
 
-    
+    </div>
+
+
 
 
     <div class="menu-toggle" id="menuToggle">
@@ -89,23 +96,23 @@
 
     <script>
 
-document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", () => {
 
-    const toggle =
-        document.getElementById("menuToggle");
+            const toggle =
+                document.getElementById("menuToggle");
 
-    const sidebar =
-        document.getElementById("navLinks");
+            const sidebar =
+                document.getElementById("navLinks");
 
-    toggle.addEventListener("click", () => {
+            toggle.addEventListener("click", () => {
 
-        sidebar.classList.toggle("show");
+                sidebar.classList.toggle("show");
 
-    });
+            });
 
-});
+        });
 
-</script>
+    </script>
 
     <script>
 
@@ -122,7 +129,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3000);
 
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
 
 </body>
 

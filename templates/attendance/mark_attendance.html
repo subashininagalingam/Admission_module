@@ -148,12 +148,14 @@
                         <div class="row">
                             <div class="col-6">
                                 <input type="number" id="durationHours" class="form-control" placeholder="Hours"
-                                    min="0">
+                                    min="0" value="{{ duration_hours }}" oninput="toggleUnit('durationHours','hoursUnit')">
+                                <span id="hoursUnit" class="input-group-text" style="display:none;">hrs</span>
                             </div>
 
                             <div class="col-6">
                                 <input type="number" id="durationMinutes" class="form-control" placeholder="Minutes"
-                                    min="0" max="59">
+                                    min="0" max="59" value="{{ duration_minutes }}" oninput="toggleUnit('durationMinutes','minutesUnit')">
+                                <span id="minutesUnit" class="input-group-text" style="display:none;">mins</span>
                             </div>
                         </div>
                     </div>
@@ -361,18 +363,27 @@
 
     function updateCounts() {
 
-        let present = 0, absent = 0, late = 0;
+    let present = 0, absent = 0, late = 0;
 
-        attendanceData.forEach(d => {
-            if (d.status === 'Present') present++;
-            if (d.status === 'Absent') absent++;
-            if (d.status === 'Late') late++;
-        });
+    attendanceData.forEach(d => {
+        if (d.status === 'Present') present++;
+        if (d.status === 'Absent') absent++;
+        if (d.status === 'Late') late++;
+    });
 
-        document.getElementById('presentCount').innerText = present;
-        document.getElementById('absentCount').innerText = absent;
-        document.getElementById('lateCount').innerText = late;
-    }
+    document.getElementById('presentCount').innerText = present;
+    document.getElementById('absentCount').innerText = absent;
+    document.getElementById('lateCount').innerText = late;
+
+    // Attendance Percentage Update
+    const percentage =
+        students.length > 0
+            ? Math.round((present / students.length) * 100)
+            : 0;
+
+    document.getElementById('attendancePercentage').innerText =
+        percentage + "% Present";
+}
 
     async function submitAttendance() {
 
@@ -542,6 +553,14 @@
 
     document.getElementById('attendancePercentage').innerText =
         percentage + "% Present";
+
+    function toggleUnit(inputId, unitId) {
+
+    const input = document.getElementById(inputId);
+    const unit = document.getElementById(unitId);
+
+    unit.style.display = input.value ? 'flex' : 'none';
+}
 
 </script>
 
