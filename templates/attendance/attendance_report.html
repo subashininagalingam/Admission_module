@@ -46,7 +46,7 @@
 
                 {% for batch in filter.form.batch.field.queryset %}
                 <option value="{{ batch.id }}" {% if request.GET.batch == batch.id|stringformat:'s' %} selected {% endif %}>
-                    {{ batch.batch_name }}
+                    {{ batch.batch_name }} ({{ batch.course.course_name }})
                 </option>
                 {% endfor %}
 
