@@ -25,6 +25,10 @@
 
 }
 
+.body{
+    zoom: 50%;
+}
+
 .main-content{
 
     margin-left:240px;

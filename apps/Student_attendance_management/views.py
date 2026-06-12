@@ -923,7 +923,7 @@ CSC Computer Education
     )
 
     return JsonResponse({
-    "message": "Email sent successfully"
+    "message": "📧 Email sent successfully"
 })
 
 def send_sms_notification(request, enrollment_id):
@@ -996,7 +996,7 @@ Please attend classes regularly.
     )
 
     return JsonResponse({
-    "message": "SMS sent successfully"
+    "message": "📱 SMS sent successfully"
 })
 
 def send_email_all(request):
@@ -1188,7 +1188,7 @@ Total Absences:
     )
 
     return JsonResponse({
-    "message": "Monthly report sent"
+    "message": "📊 Monthly report sent successfully"
 })
     #Reports 
     

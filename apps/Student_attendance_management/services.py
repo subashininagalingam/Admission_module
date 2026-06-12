@@ -175,10 +175,10 @@ def get_low_attendance_data():
             attendance_percentage = 100
 
         # Alert Logic
-        if consecutive_absences >= 2:
+        if total_absences >= 3:
             alert_level = "Critical"
 
-        elif consecutive_absences in [1, 2]:
+        elif total_absences <3 and total_absences >1:
             alert_level = "Warning"
 
         else:
