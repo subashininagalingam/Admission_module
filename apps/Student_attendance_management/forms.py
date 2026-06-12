@@ -32,12 +32,14 @@ class BatchForm(forms.ModelForm):
 
             'start_date':forms.DateInput(attrs={
                 'class':'form-control',
-                'type':'date'
+                'type':'date',
+                'required':True,
             }),
 
             'end_date':forms.DateInput(attrs={
                 'class':'form-control',
-                'type':'date'
+                'type':'date',
+                'required':True,
             }),
 
             'start_time': forms.TimeInput(attrs={

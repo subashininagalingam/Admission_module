@@ -60,12 +60,17 @@ body{
     font-size:13px;
     font-weight:600;
     letter-spacing:0.5px;
+    background-color:rgb(30, 42, 120) ;
 }
 
 .table td{
     border-color:rgb(30, 42, 120);
     padding:14px;
     vertical-align:middle;
+}
+
+.table tr{
+    background-color: white;
 }
 
 .table tbody tr:hover{

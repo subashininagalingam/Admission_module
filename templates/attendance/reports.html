@@ -75,7 +75,7 @@
             {% for batch in batches %}
 
             <option value="{{ batch.batch_name|lower }}">
-                {{ batch.batch_name }}
+                {{ batch.batch_name }} ({{ batch.course.course_name }})
             </option>
 
             {% endfor %}
@@ -118,133 +118,11 @@
 
     </div>
 
-
-    <!-- CHART SECTION -->
-
-    <div class="row g-4 mb-4">
-
-        <!-- BAR CHART -->
-
-        <div class="col-lg-7">
-
-            <div class="chart-card">
-
-                <div class="chart-header">
-
-                    <h4>
-
-                        Monthly Attendance Chart
-
-                    </h4>
-
-                </div>
-
-                <div class="chart-container">
-
-                    <canvas id="attendanceChart"></canvas>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- DONUT CHART -->
-
-        <div class="col-lg-5">
-
-            <div class="chart-card">
-
-                <div class="chart-header">
-
-                    <h4>
-
-                        Batch-wise Attendance
-
-                    </h4>
-
-                </div>
-
-                <div class="pie-chart-container">
-
-                    <canvas id="batchChart"></canvas>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-    {% if attendance_status == "not_started" %}
-
-    <div class="alert alert-danger">
-
-        Today's attendance has not been started yet.
-
-    </div>
-
-    {% elif attendance_status == "in_progress" %}
-
-    <div class="alert alert-warning">
-
-        Today's attendance is in progress.
-
-        {{ today_marked_count }} of
-        {{ total_students }}
-        students have been marked.
-
-        {{ pending_count }}
-        students are pending.
-
-    </div>
-
-    {% else %}
-
-    <div class="alert alert-success">
-
-        Today's attendance has been completed successfully.
-
-        Attendance records updated for all
-        {{ total_students }}
-        students.
-
-    </div>
-
-    {% endif %}
-
-
-    <! --Batch Attendance chart-->
-
-        <div class="chart-card mb-4">
-
-            <div class="chart-header">
-
-                <h4>
-
-                    Batch Performance Comparison
-
-                </h4>
-
-            </div>
-
-            <div style="height:350px;">
-
-                <canvas id="batchPerformanceChart"></canvas>
-
-            </div>
-
-        </div>
-
-
-
-
-        <div id="resultsCount" class="results-count">
+    <div id="resultsCount" class="results-count">
             Showing {{ report_students|length }} of {{ report_students|length }} Students
         </div>
 
-        <!-- REPORT TABLE -->
+    <!-- REPORT TABLE -->
 
         <div class="report-table-card">
 
@@ -400,6 +278,126 @@
 </div>
 
 
+    <!-- CHART SECTION -->
+
+    <div class="row g-4 mb-4">
+
+        <!-- BAR CHART -->
+
+        <div class="col-lg-7">
+
+            <div class="chart-card">
+
+                <div class="chart-header">
+
+                    <h4>
+
+                        Monthly Attendance Chart
+
+                    </h4>
+
+                </div>
+
+                <div class="chart-container">
+
+                    <canvas id="attendanceChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- DONUT CHART -->
+
+        <div class="col-lg-5">
+
+            <div class="chart-card">
+
+                <div class="chart-header">
+
+                    <h4>
+
+                        Batch-wise Attendance
+
+                    </h4>
+
+                </div>
+
+                <div class="pie-chart-container">
+
+                    <canvas id="batchChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+    {% if attendance_status == "not_started" %}
+
+    <div class="alert alert-danger">
+
+        Today's attendance has not been started yet.
+
+    </div>
+
+    {% elif attendance_status == "in_progress" %}
+
+    <div class="alert alert-warning">
+
+        Today's attendance is in progress.
+
+        {{ today_marked_count }} of
+        {{ total_students }}
+        students have been marked.
+
+        {{ pending_count }}
+        students are pending.
+
+    </div>
+
+    {% else %}
+
+    <div class="alert alert-success">
+
+        Today's attendance has been completed successfully.
+
+        Attendance records updated for all
+        {{ total_students }}
+        students.
+
+    </div>
+
+    {% endif %}
+
+
+    <! --Batch Attendance chart-->
+
+        <div class="chart-card mb-4">
+
+            <div class="chart-header">
+
+                <h4>
+
+                    Batch Performance Comparison
+
+                </h4>
+
+            </div>
+
+            <div style="height:350px;">
+
+                <canvas id="batchPerformanceChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        
 <!-- CHART JS -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

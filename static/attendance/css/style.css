@@ -87,6 +87,20 @@ font-size: 16px;
     display:none;
 }
 
+/* SCROLLBAR */
+
+::-webkit-scrollbar{
+    width: 5px;
+}
+
+::-webkit-scrollbar-thumb{
+    background-color: rgb(255, 202, 43);
+}
+
+::-webkit-scrollbar-track{
+    background-color: rgb(30, 42, 120);
+}
+
 .message-container {
     position: fixed;
     bottom: 20px;

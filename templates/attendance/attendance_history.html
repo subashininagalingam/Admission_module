@@ -6,7 +6,7 @@
 {% endblock title %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'attendance/css/attendance_report.css' %}">
+<link rel="stylesheet" href="{% static 'attendance/css/attendance_history.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -283,15 +283,6 @@
 
 
 <script>
-    document.getElementById("resetBtn").addEventListener("click", function () {
-
-        // go to same page WITHOUT GET params
-        window.location.href = window.location.pathname;
-
-    });
-</script>
-
-<script>
     function validateFormat() {
 
         const format = document.getElementById("format").value;
@@ -434,19 +425,28 @@ function getAvatarColor(index) {
     return colors[index % colors.length];
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+function applyAvatarColors() {
 
     document.querySelectorAll('.student-avatar').forEach((el, index) => {
         el.style.backgroundColor = getAvatarColor(index);
     });
 
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    applyAvatarColors();
+
 });
 
 document.addEventListener("DOMContentLoaded", function () {
 
+    const today = new Date().toISOString().split('T')[0];
+
     document.querySelectorAll('input[type="date"], input[type="time"]')
         .forEach(input => {
 
+            // Open picker
             input.addEventListener("click", function () {
 
                 if (this.showPicker) {
@@ -456,6 +456,38 @@ document.addEventListener("DOMContentLoaded", function () {
             });
 
         });
+
+    const fromDate = document.querySelector('input[name="from_date"]');
+    const toDate = document.querySelector('input[name="to_date"]');
+    const error = document.getElementById("date-error");
+
+    // Prevent future date selection
+    fromDate.max = today;
+    toDate.max = today;
+
+    function validateDate() {
+
+        if (
+            (fromDate.value && fromDate.value > today) ||
+            (toDate.value && toDate.value > today)
+        ) {
+
+            error.innerText = "Future dates are not allowed";
+
+        } else {
+
+            error.innerText = "";
+
+        }
+
+    }
+
+    fromDate.addEventListener("input", validateDate);
+    toDate.addEventListener("input", validateDate);
+
+    fromDate.addEventListener("change", validateDate);
+    toDate.addEventListener("change", validateDate);
+
 });
 </script>
 
@@ -529,25 +561,15 @@ document.getElementById("resetBtn").addEventListener("click", function () {
         let parser = new DOMParser();
         let doc = parser.parseFromString(data, "text/html");
 
-        // TABLE UPDATE
-        document.querySelector(".table-wrapper").innerHTML =
-            doc.querySelector(".table-wrapper").innerHTML;
+        document.querySelector(".table tbody").innerHTML =
+            doc.querySelector(".table tbody").innerHTML;
 
-        // TOTAL STUDENTS UPDATE
-        document.querySelector(".total-count").innerHTML =
-            doc.querySelector(".total-count").innerHTML;
-
-        // PAGINATION INFO UPDATE
-        document.querySelector(".pagination-info").innerHTML =
-            doc.querySelector(".pagination-info").innerHTML;
-
-        // PAGINATION BUTTONS UPDATE
-        document.querySelector(".pagination-buttons").innerHTML =
-            doc.querySelector(".pagination-buttons").innerHTML;
+        applyAvatarColors(); 
 
     });
 
 });
 
 </script>
+
 {% endblock %}
