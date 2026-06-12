@@ -1,6 +1,10 @@
 {% extends 'attendance/base.html' %}
 {% load static %}
 
+{% block title %}
+<title>Student Attendance - History</title>
+{% endblock title %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'attendance/css/attendance_report.css' %}">
 {% endblock %}
@@ -9,7 +13,7 @@
 
 <div class="main-content">
 
-    <h2 class="page-title">Attendance Report</h2>
+    <h2 class="page-title">Attendance History</h2>
 
     <form method="GET" class="filter-form" id="filterForm">
 

@@ -10,7 +10,7 @@ from .views import (
     BatchViewSet,
     AttendanceViewSet,
     attendance_export,
-    attendance_report_page,
+    attendance_history_page,
     batches_page,
     mark_attendance_page,
     bulk_attendance,
@@ -39,7 +39,7 @@ urlpatterns = [
 
     path("attendance/submit/",AttendanceSubmitAPIView.as_view(),name="attendance-submit"),
 
-    path('attendance-report/',attendance_report_page,name='attendance_report'),
+    path('attendance-history/',attendance_history_page,name='attendance_history'),
     path('attendance-export/', views.attendance_export, name='attendance_export'),
 
     path("student-attendance-summary/<int:student_id>/",views.student_attendance_summary,name="student_attendance_summary"),

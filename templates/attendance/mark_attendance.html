@@ -3,7 +3,7 @@
 {% load custom_tags %}
 
 {% block title %}
-<title>Mark Attendance</title>
+<title>Student Attendance - Mark Attendance</title>
 {% endblock title %}
 
 {% block extra_css %}
@@ -455,7 +455,7 @@
     if (response.ok) {
         alert("Attendance submitted successfully");
 
-        window.location.href = "{% url 'attendance_report' %}";
+        window.location.href = "{% url 'attendance_history' %}";
 
     } else {
         alert(JSON.stringify(result));

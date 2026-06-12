@@ -41,8 +41,8 @@
                 Mark Attendance
             </a> -->
 
-        <a href="{% url 'attendance_report' %}"
-            class="{% if request.resolver_match.url_name == 'attendance_report' %}active{% endif %}">
+        <a href="{% url 'attendance_history' %}"
+            class="{% if request.resolver_match.url_name == 'attendance_history' %}active{% endif %}">
             <i class="fa-solid fa-clock-rotate-left"></i>
             Attendance History
         </a>
@@ -77,20 +77,21 @@
 
 
     {% if messages %}
-    <div class="message-container">
-        {% for message in messages %}
-        <div class="alert 
-                {% if message.tags == 'success' %}
-                    alert-success
-                {% elif message.tags == 'error' %}
-                    alert-danger
-                {% endif %}
-            ">
-            {{ message }}
-        </div>
-        {% endfor %}
+<div class="message-container">
+    {% for message in messages %}
+    <div class="toast-message
+        {% if message.tags == 'success' %}
+            success
+        {% elif message.tags == 'error' %}
+            error
+        {% endif %}
+    ">
+        <i class="fa-solid fa-circle-check"></i>
+        {{ message }}
     </div>
-    {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
     {% block content %}
     {% endblock %}
 

@@ -567,7 +567,7 @@ def bulk_attendance(request):
         'Attendance and syllabus log saved successfully'
     })
 
-def attendance_report_page(request):
+def attendance_history_page(request):
 
     records = Attendance.objects.select_related(
         'enrollment',
@@ -592,7 +592,7 @@ def attendance_report_page(request):
 
     return render(
         request,
-        'attendance/attendance_report.html',
+        'attendance/attendance_history.html',
         context
     )
 

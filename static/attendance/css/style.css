@@ -87,6 +87,52 @@ font-size: 16px;
     display:none;
 }
 
+.message-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+
+.toast-message {
+    min-width: 280px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    animation: slideIn 0.4s ease;
+}
+
+
+.toast-message.success {
+    background-color: #28a745;
+}
+
+
+.toast-message.error {
+    background-color: #dc3545;
+}
+
+
+@keyframes slideIn {
+
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+}
+
 @media (max-width: 1024px){
 
     .sidebar{
