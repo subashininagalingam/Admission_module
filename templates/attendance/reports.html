@@ -2,127 +2,226 @@
 
 {% load static %}
 
-{% block title %}
-<title>Student Attendance - Reports & Analytics</title>
-{% endblock title %}
-
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'attendance/css/reports.css' %}">
 
 <div class="main-content">
 
-    
 
 
 
-<div class="reports-page">
 
-    <!-- TOPBAR -->
+    <div class="reports-page">
 
-    <div class="reports-topbar">
+        <!-- TOPBAR -->
 
-        <div>
+        <div class="reports-topbar">
 
-            <h5>
+            <div>
 
-                Reports & Analytics
+                <h5>
 
-            </h5>
+                    Reports & Analytics
+
+                </h5>
+
+            </div>
+
+            <div class="topbar-actions">
+
+                <a href="{% url 'analytics_pdf' %}" class="export-btn pdf-btn">
+                    <i class="fas fa-file-pdf"></i>
+                    Analytics PDF
+                </a>
+
+                <a href="{% url 'analytics_excel' %}" class="export-btn excel-btn">
+                    <i class="fas fa-file-excel"></i>
+                    Analytics Excel
+                </a>
+
+            </div>
+
+        </div>
+        <div class="filter-container">
+
+            <input type="text" id="studentNameFilter" class="filter-input" placeholder="Student Name">
+
+            <select id="courseFilter" class="filter-input">
+
+                <option value="">
+                    Course
+                </option>
+
+                {% for course in courses %}
+
+                <option value="{{ course.course_name|lower }}">
+                    {{ course.course_name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+            <select id="batchFilter" class="filter-input">
+
+                <option value="">
+                    Batch
+                </option>
+
+                {% for batch in batches %}
+
+                <option value="{{ batch.id }}">
+                    {{ batch.batch_name }}
+                    ({{ batch.course.course_name }})
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+            <select id="statusFilter" class="filter-input">
+
+                <option value="">
+                    Status
+                </option>
+
+                <option value="excellent">
+                    Excellent
+                </option>
+
+                <option value="good">
+                    Good
+                </option>
+
+                <option value="warning">
+                    Warning
+                </option>
+
+                <option value="critical">
+                    Critical
+                </option>
+
+            </select>
+
+            <input type="number" id="attendanceFilter" class="filter-input" placeholder="Attendance %">
+
+            <button id="clearFilters" class="clear-btn">
+
+                <i class="bi bi-x-circle"></i>
+
+                Clear
+
+            </button>
+
+            <button id="showAllBtn" class="clear-btn">
+                Apply Filter
+            </button>
 
         </div>
 
-        <div class="topbar-actions">
 
-            <a href="{% url 'analytics_pdf' %}" class="export-btn pdf-btn">
-                <i class="fas fa-file-pdf"></i>
-                Analytics PDF
-            </a>
+        <!-- CHART SECTION -->
 
-            <a href="{% url 'analytics_excel' %}" class="export-btn excel-btn">
-                <i class="fas fa-file-excel"></i>
-                Analytics Excel
-            </a>
+        <div class="row g-4 mb-4">
+
+            <!-- BAR CHART -->
+
+            <div class="col-lg-7">
+
+                <div class="chart-card">
+
+                    <div class="chart-header">
+
+                        <h4>
+
+                            {{ monthly_chart_title }}
+
+                        </h4>
+
+                    </div>
+
+                    <div class="chart-container">
+
+                        <canvas id="attendanceChart"></canvas>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- DONUT CHART -->
+
+            <div class="col-lg-5">
+
+                <div class="chart-card">
+
+                    <div class="chart-header">
+
+                        <h4>
+
+                            {{ batch_chart_title }}
+
+                        </h4>
+                        <div class="text-muted">
+                            Attendance Updated On : {{ attendance_date }}
+                        </div>
+
+                    </div>
+
+                    <div class="pie-chart-container">
+
+                        <canvas id="batchChart"></canvas>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+        {% if attendance_status == "not_started" %}
+
+        <div class="alert alert-danger">
+
+            Today's attendance has not been started yet.
 
         </div>
 
-    </div>
-    <div class="filter-container">
+        {% elif attendance_status == "in_progress" %}
 
-        <input type="text" id="studentNameFilter" class="filter-input" placeholder="Student Name">
+        <div class="alert alert-warning">
 
-        <select id="courseFilter" class="filter-input">
+            Today's attendance is in progress.
 
-            <option value="">
-                Course
-            </option>
+            {{ today_marked_count }} of
+            {{ total_students }}
+            students have been marked.
 
-            {% for course in courses %}
+            {{ pending_count }}
+            students are pending.
 
-            <option value="{{ course.course_name|lower }}">
-                {{ course.course_name }}
-            </option>
-
-            {% endfor %}
-
-        </select>
-        <select id="batchFilter" class="filter-input">
-
-            <option value="">
-                Batch
-            </option>
-
-            {% for batch in batches %}
-
-            <option value="{{ batch.batch_name|lower }}">
-                {{ batch.batch_name }} ({{ batch.course.course_name }})
-            </option>
-
-            {% endfor %}
-
-        </select>
-
-        <select id="statusFilter" class="filter-input">
-
-            <option value="">
-                Status
-            </option>
-
-            <option value="good">
-                Good
-            </option>
-
-            <option value="warning">
-                Warning
-            </option>
-
-            <option value="critical">
-                Critical
-            </option>
-
-        </select>
-
-        <input type="number" id="attendanceFilter" class="filter-input" placeholder="Attendance %">
-
-        <button id="clearFilters" class="clear-btn">
-
-            <i class="bi bi-x-circle"></i>
-
-            Clear
-
-        </button>
-
-        <button id="showAllBtn" class="clear-btn">
-            Search All
-        </button>
-
-    </div>
-
-    <div id="resultsCount" class="results-count">
-            Showing {{ report_students|length }} of {{ report_students|length }} Students
         </div>
 
-    <!-- REPORT TABLE -->
+        {% else %}
+
+        <div class="alert alert-success">
+
+            Today's attendance has been completed successfully.
+
+            Attendance records updated for all
+            {{ total_students }}
+            students.
+
+        </div>
+
+        {% endif %}
+
+
+
+
+        <!-- REPORT TABLE -->
 
         <div class="report-table-card">
 
@@ -162,10 +261,10 @@
                             <th>STUDENT</th>
                             <th>COURSE</th>
                             <th>BATCH</th>
+                            <th>TOTAL DAYS</th>
                             <th>PRESENT</th>
                             <th>ABSENT</th>
                             <th>LATE</th>
-                            <th>TOTAL DAYS</th>
                             <th>ATTENDANCE RATE</th>
                             <th>STATUS</th>
 
@@ -178,7 +277,8 @@
                         {% for student in report_students %}
 
                         <tr class="report-row" data-name="{{ student.student.first_name|lower }}"
-                            data-course="{{ student.course.course_name|lower }}" data-batch="{{ student.batch.batch_name|lower }}"
+                            data-course="{{ student.course.course_name|lower }}"
+                            data-batch="{{ student.batch.id }}"
                             data-attendance="{{ student.attendance_rate }}" data-status="{{ student.status|lower }}">
 
 
@@ -213,6 +313,11 @@
                                 {{ student.batch.batch_name }}
 
                             </td>
+                            <td>
+
+                                {{ student.total_days }}
+
+                            </td>
 
                             <td class="present-text">
                                 {{ student.present_count }}
@@ -227,11 +332,7 @@
 
                             </td>
 
-                            <td>
 
-                                {{ student.total_days }}
-
-                            </td>
 
                             <td class="rate-text">
 
@@ -253,6 +354,12 @@
                                     Warning
                                 </span>
 
+                                {% elif student.status == "Excellent" %}
+
+                                <span class="status-badge excellent-badge">
+                                    Excellent
+                                </span>
+
                                 {% else %}
 
                                 <span class="status-badge good-badge">
@@ -260,7 +367,6 @@
                                 </span>
 
                                 {% endif %}
-
                             </td>
 
                         </tr>
@@ -275,573 +381,536 @@
 
         </div>
 
-</div>
-
-
-    <!-- CHART SECTION -->
-
-    <div class="row g-4 mb-4">
-
-        <!-- BAR CHART -->
-
-        <div class="col-lg-7">
-
-            <div class="chart-card">
-
-                <div class="chart-header">
-
-                    <h4>
-
-                        Monthly Attendance Chart
-
-                    </h4>
-
-                </div>
-
-                <div class="chart-container">
-
-                    <canvas id="attendanceChart"></canvas>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- DONUT CHART -->
-
-        <div class="col-lg-5">
-
-            <div class="chart-card">
-
-                <div class="chart-header">
-
-                    <h4>
-
-                        Batch-wise Attendance
-
-                    </h4>
-
-                </div>
-
-                <div class="pie-chart-container">
-
-                    <canvas id="batchChart"></canvas>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-    {% if attendance_status == "not_started" %}
-
-    <div class="alert alert-danger">
-
-        Today's attendance has not been started yet.
-
     </div>
 
-    {% elif attendance_status == "in_progress" %}
 
-    <div class="alert alert-warning">
+    <!-- CHART JS -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {{ monthly_present|json_script:"monthly-present" }}
+    {{ monthly_absent|json_script:"monthly-absent" }}
+    {{ monthly_late|json_script:"monthly-late" }}
+
+    {{ batch_labels|json_script:"batch-labels" }}
+    {{ batch_present_counts|json_script:"batch-counts" }}
+    {{ batch_performance_labels|json_script:"batch-performance-labels" }}
+
+    {{ batch_performance_counts|json_script:"batch-performance-counts" }}
+
+    {{ batch_present_list|json_script:"batch-present-list" }}
+    {{ batch_absent_list|json_script:"batch-absent-list" }}
+    {{ batch_late_list|json_script:"batch-late-list" }}
+    {{ batch_percentage_list|json_script:"batch-percentage-list" }}
+
+    {{ latest_month|json_script:"latest-month" }}
+
+    <script>
+
+        const attendanceChart = document.getElementById(
+            'attendanceChart'
+        );
+
+        const monthlyPresent = JSON.parse(
+            document.getElementById(
+                "monthly-present"
+            ).textContent
+        );
+
+        const monthlyAbsent = JSON.parse(
+            document.getElementById(
+                "monthly-absent"
+            ).textContent
+        );
 
-        Today's attendance is in progress.
+        const monthlyLate = JSON.parse(
+            document.getElementById(
+                "monthly-late"
+            ).textContent
+        );
 
-        {{ today_marked_count }} of
-        {{ total_students }}
-        students have been marked.
+        const batchLabels = JSON.parse(
+            document.getElementById(
+                "batch-labels"
+            ).textContent
+        );
 
-        {{ pending_count }}
-        students are pending.
+        const batchCounts = JSON.parse(
+            document.getElementById(
+                "batch-counts"
+            ).textContent
+        );
 
-    </div>
+        const presentList = JSON.parse(
+            document.getElementById(
+                "batch-present-list"
+            ).textContent
+        );
 
-    {% else %}
+        const absentList = JSON.parse(
+            document.getElementById(
+                "batch-absent-list"
+            ).textContent
+        );
 
-    <div class="alert alert-success">
+        const lateList = JSON.parse(
+            document.getElementById(
+                "batch-late-list"
+            ).textContent
+        );
 
-        Today's attendance has been completed successfully.
+        const percentageList = JSON.parse(
+            document.getElementById(
+                "batch-percentage-list"
+            ).textContent
+        );
 
-        Attendance records updated for all
-        {{ total_students }}
-        students.
+        const latestMonth = JSON.parse(
+            document.getElementById(
+                "latest-month"
+            ).textContent
+        );
 
-    </div>
+        new Chart(
+            attendanceChart,
+            {
+                type: 'bar',
 
-    {% endif %}
+                data: {
 
+                    labels: [
+                        'Jan',
+                        'Feb',
+                        'Mar',
+                        'Apr',
+                        'May',
+                        'Jun',
+                        'Jul',
+                        'Aug',
+                        'Sep',
+                        'Oct',
+                        'Nov',
+                        'Dec'
+                    ],
 
-    <! --Batch Attendance chart-->
+                    datasets: [
 
-        <div class="chart-card mb-4">
+                        {
+                            label: 'Present',
 
-            <div class="chart-header">
+                            data: monthlyPresent,
 
-                <h4>
+                            backgroundColor: '#22c55e',
 
-                    Batch Performance Comparison
+                            borderRadius: 8,
 
-                </h4>
+                            barThickness: 18
 
-            </div>
+                        },
 
-            <div style="height:350px;">
+                        {
+                            label: 'Absent',
 
-                <canvas id="batchPerformanceChart"></canvas>
+                            data: monthlyAbsent,
 
-            </div>
+                            backgroundColor: '#ef4444',
 
-        </div>
+                            borderRadius: 8,
 
+                            barThickness: 18
 
-        
-<!-- CHART JS -->
+                        },
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{{ monthly_present|json_script:"monthly-present" }}
-{{ monthly_absent|json_script:"monthly-absent" }}
-{{ monthly_late|json_script:"monthly-late" }}
+                        {
+                            label: 'Late',
 
-{{ batch_labels|json_script:"batch-labels" }}
-{{ batch_present_counts|json_script:"batch-counts" }}
-{{ batch_performance_labels|json_script:"batch-performance-labels" }}
+                            data: monthlyLate,
 
-{{ batch_performance_counts|json_script:"batch-performance-counts" }}
+                            backgroundColor: '#f59e0b',
 
-<script>
+                            borderRadius: 8,
 
-    const attendanceChart = document.getElementById(
-        'attendanceChart'
-    );
+                            barThickness: 18
 
-    const monthlyPresent = JSON.parse(
-        document.getElementById(
-            "monthly-present"
-        ).textContent
-    );
+                        }
 
-    const monthlyAbsent = JSON.parse(
-        document.getElementById(
-            "monthly-absent"
-        ).textContent
-    );
-
-    const monthlyLate = JSON.parse(
-        document.getElementById(
-            "monthly-late"
-        ).textContent
-    );
-
-    const batchLabels = JSON.parse(
-        document.getElementById(
-            "batch-labels"
-        ).textContent
-    );
-
-    const batchCounts = JSON.parse(
-        document.getElementById(
-            "batch-counts"
-        ).textContent
-    );
-
-    new Chart(
-        attendanceChart,
-        {
-            type: 'bar',
-
-            data: {
-
-                labels: [
-                    'Jan',
-                    'Feb',
-                    'Mar',
-                    'Apr',
-                    'May',
-                    'Jun',
-                    'Jul',
-                    'Aug',
-                    'Sep',
-                    'Oct',
-                    'Nov',
-                    'Dec'
-                ],
-
-                datasets: [
-
-                    {
-                        label: 'Present',
-
-                        data: monthlyPresent,
-
-                        backgroundColor: '#22c55e',
-
-                        borderRadius: 8,
-
-                        barThickness: 18
-
-                    },
-
-                    {
-                        label: 'Absent',
-
-                        data: monthlyAbsent,
-
-                        backgroundColor: '#ef4444',
-
-                        borderRadius: 8,
-
-                        barThickness: 18
-
-                    },
-
-                    {
-                        label: 'Late',
-
-                        data: monthlyLate,
-
-                        backgroundColor: '#f59e0b',
-
-                        borderRadius: 8,
-
-                        barThickness: 18
-
-                    }
-
-                ]
-
-            },
-
-            options: {
-
-                responsive: true,
-
-                maintainAspectRatio: false,
-
-                plugins: {
-
-                    legend: {
-
-                        position: 'top'
-
-                    }
+                    ]
 
                 },
 
-                scales: {
+                options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
 
-                    y: {
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
 
-                        beginAtZero: true
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
 
-                    }
-
-                }
-
-            }
-
-        }
-    );
-
-    const batchChart = document.getElementById(
-        'batchChart'
-    );
-
-    new Chart(
-        batchChart,
-        {
-
-            type: 'doughnut',
-
-            data: {
-
-                labels: batchLabels,
-
-                datasets: [{
-
-                    data: batchCounts,
-
-                    backgroundColor: [
-
-                        '#22c55e',
-                        '#2563eb',
-                        '#f59e0b',
-                        '#7c3aed',
-                        '#ef4444',
-                        '#06b6d4',
-                        '#ec4899',
-                        '#84cc16',
-                        '#f97316'
-
-                    ],
-
-                    borderWidth: 0
-
-                }]
-
-            },
-
-            options: {
-
-                responsive: true,
-
-                maintainAspectRatio: false,
-
-                cutout: '70%',
-
-                plugins: {
-
-                    legend: {
-
-                        position: 'right'
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
 
                     }
 
                 }
 
             }
-
-        }
-    );
-
-
-    const batchPerformanceLabels = JSON.parse(
-        document.getElementById(
-            "batch-performance-labels"
-        ).textContent
-    );
-
-    const batchPerformanceCounts = JSON.parse(
-        document.getElementById(
-            "batch-performance-counts"
-        ).textContent
-    );
-
-    const batchPerformanceChart =
-        document.getElementById(
-            "batchPerformanceChart"
         );
 
-    new Chart(
-        batchPerformanceChart,
-        {
-            type: "bar",
+        const batchChart = document.getElementById(
+            'batchChart'
+        );
 
-            data: {
+        const colorPalette = [
+    '#22c55e',
+    '#2563eb',
+    '#f59e0b',
+    '#7c3aed',
+    '#ef4444',
+    '#06b6d4',
+    '#ec4899',
+    '#84cc16',
+    '#f97316'
+];
 
-                labels:
-                    batchPerformanceLabels,
+const chartColors = batchLabels.map(
+    (_, index) => colorPalette[index % colorPalette.length]
+);
 
-                datasets: [
+        new Chart(
+            batchChart,
+            {
+                type: 'doughnut',
 
-                    {
-                        label:
-                            "Attendance %",
+                data: {
 
-                        data:
-                            batchPerformanceCounts,
+                    labels: batchLabels,
 
-                        backgroundColor:
-                            "#2563eb",
+                    datasets: [{
 
-                        borderRadius: 8
+                        data: batchCounts,
+
+                        backgroundColor: chartColors,
+
+                        borderWidth: 0
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    cutout: '70%',
+
+                    plugins: {
+
+                        legend: {
+                            position: 'right'
+                        },
+
+                        tooltip: {
+
+                            callbacks: {
+
+                                title: function (context) {
+
+                                    return batchLabels[
+                                        context[0].dataIndex
+                                    ];
+
+                                },
+
+                                label: function (context) {
+
+                                    let index =
+                                        context.dataIndex;
+
+                                    return [
+
+                                        "Present : " +
+                                        presentList[index],
+
+                                        "Absent : " +
+                                        absentList[index],
+
+                                        "Late : " +
+                                        lateList[index],
+
+                                        "Attendance : " +
+                                        (percentageList[index] || 0) + "%"
+
+                                    ];
+
+                                }
+
+                            }
+
+                        }
+
                     }
-                ]
-            },
 
-            options: {
+                }
 
-                indexAxis: "y",
+            }
+        );
 
-                responsive: true,
 
-                maintainAspectRatio: false,
+        const batchPerformanceLabels = JSON.parse(
+            document.getElementById(
+                "batch-performance-labels"
+            ).textContent
+        );
 
-                scales: {
+        const batchPerformanceCounts = JSON.parse(
+            document.getElementById(
+                "batch-performance-counts"
+            ).textContent
+        );
 
-                    x: {
+        const batchPerformanceChart =
+            document.getElementById(
+                "batchPerformanceChart"
+            );
 
-                        beginAtZero: true,
+        new Chart(
+            batchPerformanceChart,
+            {
+                type: "bar",
 
-                        max: 100
+                data: {
+
+                    labels:
+                        batchPerformanceLabels,
+
+                    datasets: [
+
+                        {
+                            label:
+                                "Attendance %",
+
+                            data:
+                                batchPerformanceCounts,
+
+                            backgroundColor:
+                                "#2563eb",
+
+                            borderRadius: 8
+                        }
+                    ]
+                },
+
+                options: {
+
+                    indexAxis: "y",
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    scales: {
+
+                        x: {
+
+                            beginAtZero: true,
+
+                            max: 100
+                        }
                     }
                 }
             }
-        }
-    );
-    // filters
+        );
+        // filters
 
-    function applyFilters() {
+        function applyFilters() {
 
-        let visibleCount = 0;
+            let visibleCount = 0;
 
-        const totalCount =
+            const totalCount =
+                document.querySelectorAll(
+                    ".report-row"
+                ).length;
+
+            const name =
+                document.getElementById(
+                    "studentNameFilter"
+                ).value.toLowerCase().trim();
+
+            const course =
+                document.getElementById(
+                    "courseFilter"
+                ).value.toLowerCase().trim();
+
+            const batch =
+                document.getElementById(
+                    "batchFilter"
+                ).value.toLowerCase().trim();
+
+
+            const status =
+                document.getElementById(
+                    "statusFilter"
+                ).value.toLowerCase().trim();
+            const student_name =
+                document.getElementById(
+                    "studentNameFilter"
+                ).value;
+
+
+
+            const attendance =
+                document.getElementById(
+                    "attendanceFilter"
+                ).value.trim();
+
             document.querySelectorAll(
                 ".report-row"
-            ).length;
+            ).forEach(row => {
 
-        const name =
-            document.getElementById(
-                "studentNameFilter"
-            ).value.toLowerCase().trim();
+                const studentName =
+                    row.dataset.name.toLowerCase();
 
-        const course =
-            document.getElementById(
-                "courseFilter"
-            ).value.toLowerCase().trim();
+                const studentCourse =
+                    row.dataset.course.toLowerCase();
 
-        const batch =
-            document.getElementById(
-                "batchFilter"
-            ).value.toLowerCase().trim();
+                const studentStatus =
+                    row.dataset.status.toLowerCase();
 
+                const studentAttendance =
+                    parseFloat(
+                        row.dataset.attendance
+                    );
 
-        const status =
-            document.getElementById(
-                "statusFilter"
-            ).value.toLowerCase().trim();
+                let attendanceMatch = true;
 
-        const attendance =
-            document.getElementById(
-                "attendanceFilter"
-            ).value.trim();
+                if (attendance !== "") {
 
-        document.querySelectorAll(
-            ".report-row"
-        ).forEach(row => {
+                    attendanceMatch =
+                        studentAttendance >=
+                        parseFloat(attendance);
 
-            const studentName =
-                row.dataset.name.toLowerCase();
+                }
 
-            const studentCourse =
-                row.dataset.course.toLowerCase();
+                const show =
 
-            const studentStatus =
-                row.dataset.status.toLowerCase();
+                    (name === "" ||
+                        studentName.startsWith(name))
 
-            const studentAttendance =
-                parseFloat(
-                    row.dataset.attendance
-                );
+                    &&
+                    
 
-            let attendanceMatch = true;
+                    (course === "" ||
+                        studentCourse === course)
 
-            if (attendance !== "") {
+                    &&
 
-                attendanceMatch =
-                    studentAttendance >=
-                    parseFloat(attendance);
+                    (batch === "" ||
+                        row.dataset.batch === batch)
 
-            }
+                    &&
 
-            const show =
+                    (status === "" ||
+                        studentStatus === status)
 
-                (name === "" ||
-                    studentName.startsWith(name))
+                    &&
 
-                &&
+                    attendanceMatch;
 
-                (course === "" ||
-                    studentCourse.includes(course))
+                row.style.display =
+                    show ? "" : "none";
 
-                &&
+                if (show) {
 
-                (batch === "" ||
-                    row.dataset.batch === batch)
+                    visibleCount++;
 
-                &&
-
-                (status === "" ||
-                    studentStatus === status)
-
-                &&
-
-                attendanceMatch;
-
-            row.style.display =
-                show ? "" : "none";
-
-            if (show) {
-
-                visibleCount++;
-
-            }
-
-        });
-
-        document.getElementById("resultsCount").textContent = `Showing ${visibleCount} of ${totalCount} Students`;
-
-    }
-
-    document.querySelectorAll(
-        ".filter-input,.filter-select"
-    ).forEach(input => {
-
-        input.addEventListener(
-            "keyup",
-            applyFilters
-        );
-
-        input.addEventListener(
-            "change",
-            applyFilters
-        );
-
-    });
-
-    document.getElementById(
-        "clearFilters"
-    ).addEventListener(
-        "click",
-        function () {
-
-            document.querySelectorAll(
-                ".filter-input"
-            ).forEach(input => {
-
-                input.value = "";
+                }
 
             });
 
-            document.getElementById(
-                "statusFilter"
-            ).value = "";
-
-            applyFilters();
+            // document.getElementById("resultsCount").textContent = `Showing ${visibleCount} of ${totalCount} Students`;
 
         }
-    );
-    /* Select all btn */
-    document.getElementById(
-        "showAllBtn"
-    ).addEventListener(
-        "click",
-        function () {
 
-            document.querySelectorAll(
-                ".filter-input"
-            ).forEach(input => {
+        /* document.querySelectorAll(
+             ".filter-input,.filter-select"
+         ).forEach(input => {
+ 
+             input.addEventListener(
+                 "keyup",
+                 applyFilters
+             );
+ 
+             input.addEventListener(
+                 "change",
+                 applyFilters
+             );
+ 
+         });*/
 
-                input.value = "";
+        document.getElementById(
+            "clearFilters"
+        ).addEventListener(
+            "click",
+            function () {
 
-            });
+                window.location.href =
+                    "/api/reports/";
 
-            document.querySelectorAll(
-                ".filter-select"
-            ).forEach(select => {
+            }
+        );
+        /* Select all btn */
+        document.getElementById(
+            "showAllBtn"
+        ).addEventListener(
+            "click",
+            function () {
 
-                select.value = "";
+                const course =
+                    document.getElementById(
+                        "courseFilter"
+                    ).value;
 
-            });
+                const batch =
+                    document.getElementById(
+                        "batchFilter"
+                    ).value;
 
-            applyFilters();
+                const status =
+                    document.getElementById(
+                        "statusFilter"
+                    ).value;
 
-        }
-    );
+                const student_name =
+                    document.getElementById(
+                        "studentNameFilter"
+                    ).value;
 
-</script>
+                const attendance =
+                    document.getElementById(
+                        "attendanceFilter"
+                    ).value;
+
+                window.location.href =
+                    `?student_name=${student_name}&course=${course}&batch=${batch}&status=${status}&attendance=${attendance}`;
+
+            }
+        );
+
+    </script>
 </div>
 
 {% endblock %}

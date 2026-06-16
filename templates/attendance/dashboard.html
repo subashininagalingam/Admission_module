@@ -15,7 +15,7 @@
     <div class="topbar">
         <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Search...">
+                <input type="text" id="searchInput" placeholder="Search by Batch, Course, Trainer, Timing...">
         </div>
 
         <div class="profile">
@@ -27,7 +27,17 @@
         </div>
     </div><br>
 
-    <h2>Attendance Dashboard</h2><br>
+    <h2>Attendance Dashboard</h2>
+
+    <div class="batch-detail-card"
+     id="batchDetailCard"
+     style="display:none;">
+
+    <h4>Batch Details</h4>
+
+    <div id="batchList"></div>
+
+</div><br>
 
     <div class="stats-grid">
 
@@ -59,7 +69,7 @@
     <h3>Present Today</h3></div>
     </div>
     <h2 id="presentCount">{{ present }}</h2>
-    <p>{{ present_change }}%</p>
+    <p>{{ present_change }}% vs last attendance</p>
 </div>
 
 <div class="card">
@@ -71,13 +81,13 @@
     <h3>Absent Today</h3></div>
     </div>
     <h2 id="absentCount">{{ absent }}</h2>
-    <p>{{ absent_change }}%</p>
+    <p>{{ absent_change }}% vs last attendance</p>
 </div>
 
 <div class="card">
     <h3>Late Today</h3>
     <h2 id="lateCount">{{ late }}</h2>
-    <p>{{ late_change }}%</p>
+    <p>{{ late_change }}% vs last attendance</p>
 </div>
 
 </div>
@@ -102,18 +112,62 @@ searchInput.addEventListener("input", function () {
     }, 300);
 });
 
+
 async function liveSearch(query) {
 
-    const res = await fetch(`/api/dashboard-api/?search=${encodeURIComponent(query)}`);
+    const batchCard =
+        document.getElementById("batchDetailCard");
 
+    const batchList =
+        document.getElementById("batchList");
+
+    if (!query.trim()) {
+
+    batchCard.style.display = "none";
+
+    document.getElementById("batchList").innerHTML = "";
+
+    const res = await fetch('/api/dashboard-api/');
     const data = await res.json();
-
-    console.log(data);
 
     document.getElementById("totalCount").innerText = data.total;
     document.getElementById("presentCount").innerText = data.present;
     document.getElementById("absentCount").innerText = data.absent;
     document.getElementById("lateCount").innerText = data.late;
+
+    return;
+}
+    const res = await fetch(
+        `/api/dashboard-api/?search=${encodeURIComponent(query)}`
+    );
+
+    const data = await res.json();
+
+    document.getElementById("totalCount").innerText = data.total;
+    document.getElementById("presentCount").innerText = data.present;
+    document.getElementById("absentCount").innerText = data.absent;
+    document.getElementById("lateCount").innerText = data.late;
+
+
+batchList.innerHTML = "";
+
+data.batches.forEach(item => {
+
+    batchList.innerHTML += `
+        <div class="detail-row">
+            <span class="label">Course :</span>
+            <span>${item.course}</span>
+        </div>
+
+        <div class="detail-row">
+            <span class="label">Batch :</span>
+            <span>${item.batch}</span>
+        </div>
+        <hr>
+    `;
+});
+
+batchCard.style.display = "block";
 }
 </script>
 

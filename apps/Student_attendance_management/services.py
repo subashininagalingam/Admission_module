@@ -1,5 +1,6 @@
-from .models import Attendance
+from .models import Attendance, AbsentTracker
 from apps.admissions.models import Enrollment
+from django.db.models import Q
 
 
 def get_absent_tracker_data():
@@ -25,13 +26,18 @@ def get_absent_tracker_data():
             .filter(enrollment=enrollment)
             .order_by('-attendance_date')
         )
+        
+        tracker = AbsentTracker.objects.filter(
+            enrollment=enrollment
+        ).first()
 
         total_absences = attendance_records.filter(
             status='Absent'
         ).count()
 
         present_count = attendance_records.filter(
-            status='Present'
+            Q(status='Present') |
+            Q(status='Late')
         ).count()
 
         consecutive_absences = 0
@@ -73,12 +79,18 @@ def get_absent_tracker_data():
         else:
             observation_note = "Normal Attendance"
         
-        student_attendance_count = attendance_records.count()
-        
-        if student_attendance_count < total_working_days:
-            attendance_status = "Incomplete"
-        else:
+        from django.utils import timezone
+
+        today = timezone.now().date()
+
+        attendance_marked_today = attendance_records.filter(
+            attendance_date=today
+        ).exists()
+
+        if attendance_marked_today:
             attendance_status = "Complete"
+        else:
+            attendance_status = "Incomplete"
 
         students_data.append({
             
@@ -115,8 +127,10 @@ def get_absent_tracker_data():
             "attendance_status":
             attendance_status,
             
-            "admin_notes":
-            "",
+           "admin_notes":
+            tracker.admin_notes if tracker else "",
+            
+            "tracker_id": tracker.id if tracker else None,
 
         })
 
@@ -144,9 +158,13 @@ def get_low_attendance_data():
         attendance_records = Attendance.objects.filter(
             enrollment=enrollment
         ).order_by('-attendance_date')
+        
+        if attendance_records.count() < 3:
+            continue
 
         present_count = attendance_records.filter(
-            status__in=['Present', 'Late']
+            Q(status='Present') |
+            Q(status='Late')
         ).count()
 
         total_absences = attendance_records.filter(

@@ -253,11 +253,23 @@ def dashboard_api(request):
         attendance_date=today
     )
 
+    batch_details = []
+
+    for batch in batches:
+        
+        if Enrollment.objects.filter(batch=batch).exists():
+            
+            batch_details.append({
+            "course": batch.course.course_name,
+            "batch": batch.batch_name,
+        })
+
     return JsonResponse({
         "total": enrollments.count(),
         "present": attendance_qs.filter(status="Present").count(),
         "absent": attendance_qs.filter(status="Absent").count(),
         "late": attendance_qs.filter(status="Late").count(),
+        "batches": batch_details,
     })
 
 def dashboard(request):
@@ -324,35 +336,47 @@ def dashboard(request):
 
     attendance_marked = attendance_qs.count()
 
-    yesterday_qs = Attendance.objects.filter(
+    last_attendance_date = Attendance.objects.filter(
     enrollment__in=enrollments,
-    attendance_date=yesterday
-    )
+    attendance_date__lt=today
+    ).order_by('-attendance_date').values_list(
+        'attendance_date',
+       flat=True
+    ).first()
 
-    yesterday_present = yesterday_qs.filter(status="Present").count()
-    yesterday_absent = yesterday_qs.filter(status="Absent").count()
-    yesterday_late = yesterday_qs.filter(status="Late").count()
+    last_present = 0
+    last_absent = 0
+    last_late = 0
 
+    if last_attendance_date:
+        last_qs = Attendance.objects.filter(
+        enrollment__in=enrollments,
+        attendance_date=last_attendance_date
+        )
+
+        last_present = last_qs.filter(status="Present").count()
+        last_absent = last_qs.filter(status="Absent").count()
+        last_late = last_qs.filter(status="Late").count()
     percentage = round((present / total) * 100, 2) if total else 0
 
     present_change = 0
     absent_change = 0
     late_change = 0
 
-    if yesterday_present:
+    if last_present:
         present_change = round(
-            ((present - yesterday_present) / yesterday_present) * 100, 2
-        )
+        ((present - last_present) / last_present) * 100, 2
+    )
 
-    if yesterday_absent:
+    if last_absent:
         absent_change = round(
-            ((absent - yesterday_absent) / yesterday_absent) * 100, 2
-        )
+        ((absent - last_absent) / last_absent) * 100, 2
+    )
 
-    if yesterday_late:
+    if last_late:
         late_change = round(
-            ((late - yesterday_late) / yesterday_late) * 100, 2
-        )
+        ((late - last_late) / last_late) * 100, 2
+    )
 
     context = {
         "present": present,
@@ -768,9 +792,10 @@ def student_attendance_summary(request, student_id):
     })
 
 
-            # absent tracker
+         # absent tracker
 
 from .services import get_absent_tracker_data
+from .models import AbsentTracker
 
 
 def absent_tracker(request):
@@ -805,6 +830,60 @@ def absent_tracker(request):
         }
     )
     
+def get_admin_notes(request, tracker_id):
+
+    tracker = AbsentTracker.objects.filter(
+        id=tracker_id
+    ).first()
+
+    return JsonResponse({
+
+        "notes":
+        tracker.admin_notes
+        if tracker and tracker.admin_notes
+        else ""
+
+    })
+    
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+import json
+
+@require_POST
+def save_admin_notes(request):
+
+    data = json.loads(request.body)
+    
+    print("REQUEST DATA =", data)
+    print("TRACKER ID =", data.get("tracker_id"))
+
+    tracker_id = data.get("tracker_id")
+
+    notes = data.get("notes")
+
+    print("TRACKER ID =", tracker_id)
+
+    tracker = AbsentTracker.objects.filter(
+        id=tracker_id
+    ).first()
+
+    print("TRACKER =", tracker)
+
+    if not tracker:
+
+        return JsonResponse({
+            "status": "error",
+            "message": "Tracker not found"
+        })
+
+    tracker.admin_notes = notes
+
+    tracker.save()
+
+    return JsonResponse({
+        "status": "success"
+    })
+    
 from .services import get_low_attendance_data
 from django.core.mail import send_mail
 from django.conf import settings
@@ -813,7 +892,23 @@ from django.shortcuts import get_object_or_404
 
 def low_attendance_alerts(request):
 
-    low_attendance_students = get_low_attendance_data()
+    low_attendance_students = (
+        get_low_attendance_data()
+    )
+    course_filter = request.GET.get("course")
+
+    if course_filter:
+        low_attendance_students = [
+            student for student in low_attendance_students
+            if student["course"].lower() == course_filter.lower()
+        ]
+    batch_filter = request.GET.get("batch")
+
+    if batch_filter:
+        low_attendance_students = [
+            student for student in low_attendance_students
+            if student["batch"].lower() == batch_filter.lower()
+        ]
 
     critical_students = [
         student
@@ -827,16 +922,30 @@ def low_attendance_alerts(request):
         if student["alert_level"] == "Warning"
     ]
 
+    courses = Course.objects.all()
+
+    batches = Batch.objects.all()
+
     return render(
+
         request,
+
         'attendance/low_attendance.html',
+
         {
-            'critical_students': critical_students,
-            'warning_students': warning_students,
+            'low_attendance_students':
+            low_attendance_students,
+
+            "critical_students": critical_students,
+            "warning_students": warning_students,
+
+            'courses': courses,
+
+            'batches': batches,
         }
+
     )
-
-
+    
 def send_low_attendance_email(request, enrollment_id):
 
     enrollment = get_object_or_404(
@@ -1199,6 +1308,7 @@ from django.db.models import Count
 from apps.admissions.models import Enrollment, Course
 from .models import Attendance, Batch
 from .services import get_low_attendance_data
+from django.db.models import Q
 
 def get_report_students():
 
@@ -1217,8 +1327,11 @@ def get_report_students():
     for enrollment in enrollments:
 
         present_count = Attendance.objects.filter(
-            enrollment=enrollment,
-            status='Present'
+            enrollment=enrollment
+            
+        ).filter(
+            Q(status='Present') |
+            Q(status='Late')
         ).count()
 
         absent_count = Attendance.objects.filter(
@@ -1236,9 +1349,12 @@ def get_report_students():
             1
         ) if total_days > 0 else 0
 
-        if attendance_rate >= 75:
-            status = "Good"
+        if attendance_rate >= 100:
+            status = "Excellent"
 
+        elif attendance_rate >= 75:
+            status = "Good"
+            
         elif attendance_rate >= 60:
             status = "Warning"
 
@@ -1247,9 +1363,11 @@ def get_report_students():
 
         report_students.append({
 
-            "student": enrollment.student,
+            #"student": enrollment.student,
+            "student": enrollment.admission.student,
 
-            "course": enrollment.course,
+            #"course": enrollment.course,
+            "course": enrollment.admission.course_name,
 
             "batch": enrollment.batch,
 
@@ -1273,6 +1391,65 @@ def get_report_students():
 def reports(request):
 
     today = timezone.now().date()
+    
+    latest_attendance = Attendance.objects.order_by(
+        '-attendance_date'
+    ).first()
+    
+    attendance_date = ""
+    
+    if latest_attendance:
+        attendance_date = latest_attendance.attendance_date.strftime(
+            "%d %b %Y"
+        )
+    #filters
+    
+    student_name = request.GET.get(
+        "student_name"
+    )
+    attendance_filter = request.GET.get(
+        "attendance"
+    )
+    
+    course_filter = request.GET.get(
+        "course"
+    )
+    
+    batch_filter = request.GET.get(
+        "batch"
+    )
+    #selected_batch = ""
+
+    #if batch_filter:
+      #  selected_batch = batch_filter.split("|")[0]
+        
+    status_filter = request.GET.get(
+        "status"
+    )
+    
+    batch_chart_title = "Batch-wise Attendance"
+    
+    if batch_filter:
+       # batch_chart_title = (
+          #  f"Batch-wise Attendance - "
+          #  f"{batch_filter.title()}"
+       # )
+       selected_batch_obj = Batch.objects.filter(
+           id = batch_filter
+       ).first()
+       
+       if selected_batch_obj:
+           batch_chart_title = (
+               f"Batch-wise Attendance - "
+               f"{selected_batch_obj.batch_name}"
+               f"({selected_batch_obj.course.course_name})"
+           )
+    elif course_filter:
+        batch_chart_title = (
+            f"Batch-wise Attendance - "
+            f"{course_filter.title()}"
+        )
+            
     
     total_students = Enrollment.objects.count()
     
@@ -1302,8 +1479,10 @@ def reports(request):
 
     present_today = Attendance.objects.filter(
         attendance_date=today,
-        status='Present'
-    ).count()
+        ).filter(
+            Q(status='Present') |
+            Q(status='Late')
+        ).count()
 
     absent_today = Attendance.objects.filter(
         attendance_date=today,
@@ -1323,17 +1502,90 @@ def reports(request):
         'admission__course_name',
         'batch'
     )
-
+    
+    # enrollment filter
+    
+    if course_filter:
+        enrollments = enrollments.filter(
+            admission__course_name__course_name__iexact=
+            course_filter
+        )
+    if batch_filter:
+        enrollments = enrollments.filter(
+            #batch__batch_name__iexact=
+           # selected_batch
+            batch_id=batch_filter
+        )
+    if student_name:
+        enrollments = enrollments.filter(
+            admission__student__first_name__istartswith=
+            student_name
+        )
     total_days = Attendance.objects.values(
         'attendance_date'
     ).distinct().count()
+    
+    if status_filter:
+
+        filtered_students = []
+
+        for enrollment in enrollments:
+
+            present_count = Attendance.objects.filter(
+                enrollment=enrollment
+               
+            ).filter(
+                Q(status='Present') |
+                Q(status='Late')
+            ).count()
+
+            attendance_rate = (
+                round(
+                    (present_count / total_days) * 100,
+                    1
+                )
+                if total_days > 0 else 0
+            )
+            if attendance_filter:
+
+                if attendance_rate < float(
+                    attendance_filter
+                ):
+                    continue
+
+            if attendance_rate == 100:
+                status = "Excellent"
+
+            elif attendance_rate >= 75:
+                status = "Good"
+            
+            elif attendance_rate >= 60:
+                status = "Warning"
+
+            else:
+                status = "Critical"
+
+            if status.lower() == status_filter.lower():
+
+                filtered_students.append(
+                    enrollment.id
+                )
+
+        enrollments = enrollments.filter(
+            id__in=filtered_students
+        )   
+        
+    
 
     for enrollment in enrollments:
 
         present_count = Attendance.objects.filter(
             enrollment=enrollment,
-            status='Present'
-        ).count()
+            
+        ).filter(
+            Q(status='Present') |
+            Q(status='Late')
+            ).count()
 
         absent_count = Attendance.objects.filter(
             enrollment=enrollment,
@@ -1345,17 +1597,36 @@ def reports(request):
             status='Late'
         ).count()
 
-        attendance_rate = (
-            round(
-                (present_count / total_days) * 100,
-                1
-            )
-            if total_days > 0 else 0
+        total_days = (
+            present_count +
+            absent_count +
+            late_count
         )
 
-        if attendance_rate >= 75:
-            status = "Good"
+        effective_present = (
+            present_count +
+            late_count
+        )
 
+        attendance_rate = round(
+            (effective_present / total_days) * 100,
+             1
+        ) if total_days else 0
+
+    
+        if attendance_filter:
+
+            if attendance_rate < float(
+                attendance_filter
+            ):
+                continue
+
+        if attendance_rate == 100:
+            status = "Excellent"
+
+        elif attendance_rate >= 75:
+            status = "Good"
+            
         elif attendance_rate >= 60:
             status = "Warning"
 
@@ -1365,10 +1636,10 @@ def reports(request):
         report_students.append({
 
             "student":
-            enrollment.student,
+            enrollment.admission.student,
 
             "course":
-            enrollment.course,
+            enrollment.admission.course_name,
 
             "batch":
             enrollment.batch,
@@ -1393,39 +1664,51 @@ def reports(request):
         })
 
     # Monthly Chart
+    
+    monthly_chart_title = "Monthly Attendance Chart"
 
-    monthly_present = []
-    monthly_absent = []
-    monthly_late = []
+    #monthly_present = []
+    #monthly_absent = []
+    #monthly_late = []
+    monthly_present = [0] * 12
+    monthly_absent = [0] * 12
+    monthly_late = [0] * 12
+    
+    
+    
+    attendance_qs = Attendance.objects.all()
+    
+    if course_filter:
+        attendance_qs = attendance_qs.filter(
+            enrollment__admission__course_name__course_name__icontains=
+            course_filter
+        )
+        
+    if batch_filter:
+        attendance_qs = attendance_qs.filter(
+            #  enrollment__batch__batch_name__iexact=batch_filter
+            enrollment__batch_id=batch_filter
+        )
 
     for month in range(1, 13):
 
-        monthly_present.append(
+        monthly_present[month - 1] = attendance_qs.filter(
+            attendance_date__month=month,
+            attendance_date__year=today.year,
+            status="Present"
+        ).count()
 
-            Attendance.objects.filter(
-                attendance_date__month=month,
-                status='Present'
-            ).count()
+        monthly_absent[month - 1] = attendance_qs.filter(
+            attendance_date__month=month,
+            attendance_date__year=today.year,
+            status="Absent"
+        ).count()
 
-        )
-
-        monthly_absent.append(
-
-            Attendance.objects.filter(
-                attendance_date__month=month,
-                status='Absent'
-            ).count()
-
-        )
-
-        monthly_late.append(
-
-            Attendance.objects.filter(
-                attendance_date__month=month,
-                status='Late'
-            ).count()
-
-        )
+        monthly_late[month - 1] = attendance_qs.filter(
+            attendance_date__month=month,
+            attendance_date__year=today.year,
+            status="Late"
+        ).count()
 
     # Course Analytics
 
@@ -1455,13 +1738,32 @@ def reports(request):
     batch_present_counts = []
     batch_performance_labels = []
     batch_performance_counts = []
+    batch_present_list = []
+    batch_absent_list = []
+    batch_percentage_list = []
+    batch_late_list = []
+    
 
     batches = Batch.objects.all()
+    
+    if course_filter:
+        batches = batches.filter(
+            course__course_name__icontains=
+            course_filter
+        )
+    if batch_filter:
+        batches = batches.filter(
+           # batch_name__icontains=
+            #batch_filter
+            id=batch_filter
+
+            
+        )
 
     for batch in batches:
 
         batch_labels.append(
-            batch.batch_name
+            f"{batch.course.course_name} - {batch.batch_name}"
         )
 
         batch_counts.append(
@@ -1476,29 +1778,79 @@ def reports(request):
         
         present_count = Attendance.objects.filter(
             batch=batch,
+            attendance_date=latest_attendance.attendance_date,
+           #).filter(
+               # Q(status="Present") |
+            #    Q(status="Late")
             status="Present"
+        ).count()
+        
+        absent_count = Attendance.objects.filter(
+            batch=batch,
+            attendance_date=latest_attendance.attendance_date,
+            status="Absent"
+        ).count()
+        
+        late_count = Attendance.objects.filter(
+            batch=batch,
+            attendance_date=latest_attendance.attendance_date,
+            status="Late"
         ).count()
 
         total_count = Attendance.objects.filter(
-            batch=batch
+            batch=batch,
+            attendance_date=latest_attendance.attendance_date
         ).count()
 
+       # percentage = round(
+        #    (present_count / total_count) * 100,
+         #   1
+        #) if total_count else 0
+        
+        effective_present = (
+            present_count +
+            late_count
+        )
         percentage = round(
-            (present_count / total_count) * 100,
+            (effective_present / total_count) * 100,
             1
         ) if total_count else 0
+        
+        batch_present_list.append(
+            present_count
+        )
+        
+        batch_absent_list.append(
+            absent_count
+        )
+        
+        batch_late_list.append(
+            late_count
+        )
+        
+        batch_percentage_list.append(
+            percentage
+        )
 
         batch_present_counts.append(
-            present_count
+            percentage
         )
 
         batch_performance_labels.append(
-            batch.batch_name
+            f"{batch.course.course_name} - {batch.batch_name}"
         )
 
         batch_performance_counts.append(
             percentage
         )
+        
+        monthly_chart_title = "Monthly Attendance Chart"
+        
+        if course_filter:
+            monthly_chart_title = (
+                f"Monthly Attendance Chart - "
+                f"{course_filter.title()}"
+            )
 
     context = {
 
@@ -1554,6 +1906,22 @@ def reports(request):
         
         "pending_count": pending_count,
         
+        "batch_present_list": batch_present_list,
+        
+        "batch_absent_list": batch_absent_list,
+        
+        "batch_percentage_list": batch_percentage_list,
+        
+        "batch_late_list": batch_late_list,
+        
+        "batch_chart_title": batch_chart_title,
+        
+        "monthly_chart_title": monthly_chart_title,
+        
+        "attendance_date": attendance_date,
+        
+        
+        
         
             
 
@@ -1586,6 +1954,7 @@ from reportlab.lib import enums
 
 def analytics_pdf(request):
 
+
     response = HttpResponse(
         content_type='application/pdf'
     )
@@ -1600,37 +1969,35 @@ def analytics_pdf(request):
 
     elements = []
 
-    # Title
+    # =====================
+    # TITLE
+    # ======================
 
     elements.append(
-
         Paragraph(
             "CSC Computer Education",
             styles['Title']
         )
-
     )
 
     elements.append(
-
         Paragraph(
             "Attendance Analytics Report",
             styles['Heading2']
         )
-
     )
 
     elements.append(
-        Spacer(1, 12)
+        Spacer(1, 15)
     )
 
-    # Summary
+    # ======================
+    # OVERVIEW
+    # ======================
 
     today = timezone.now().date()
 
-    total_students = (
-        Enrollment.objects.count()
-    )
+    total_students = Enrollment.objects.count()
 
     present_today = Attendance.objects.filter(
         attendance_date=today,
@@ -1645,6 +2012,20 @@ def analytics_pdf(request):
     low_attendance = len(
         get_low_attendance_data()
     )
+
+    latest_attendance = Attendance.objects.order_by(
+        '-attendance_date'
+    ).first()
+
+    attendance_date = "-"
+
+    if latest_attendance:
+
+        attendance_date = (
+            latest_attendance.attendance_date.strftime(
+                "%d %b %Y"
+            )
+        )
 
     summary_data = [
 
@@ -1656,23 +2037,44 @@ def analytics_pdf(request):
 
         ["Absent Today", absent_today],
 
-        ["Low Attendance", low_attendance]
+        ["Low Attendance", low_attendance],
+
+        ["Last Attendance Updated", attendance_date]
 
     ]
 
     summary_table = Table(
-        summary_data
+        summary_data,
+        colWidths=[220, 150]
     )
 
     summary_table.setStyle(
 
         TableStyle([
 
-            ('BACKGROUND',(0,0),(-1,0),colors.lightgrey),
+            ('BACKGROUND',
+            (0,0),(-1,0),
+            colors.HexColor('#1e40af')),
 
-            ('GRID',(0,0),(-1,-1),1,colors.black),
+            ('TEXTCOLOR',
+            (0,0),(-1,0),
+            colors.white),
 
-            ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold')
+            ('FONTNAME',
+            (0,0),(-1,0),
+            'Helvetica-Bold'),
+
+            ('GRID',
+            (0,0),(-1,-1),
+            1,
+            colors.black),
+
+            ('ROWBACKGROUNDS',
+            (0,1),(-1,-1),
+            [
+                colors.whitesmoke,
+                colors.lightgrey
+            ])
 
         ])
 
@@ -1684,114 +2086,350 @@ def analytics_pdf(request):
         Spacer(1,20)
     )
 
-    # Course Analytics
+    # ======================
+    # COURSE & BATCH ANALYTICS
+    # ======================
 
     elements.append(
 
         Paragraph(
-            "Course Analytics",
+            "Course & Batch Analytics",
             styles['Heading2']
         )
 
     )
 
-    course_data = [
-        ["Course", "Students"]
-    ]
+    analytics_data = [[
 
-    for course in Course.objects.all():
+        "Course",
+        "Batch",
+        "Students",
+        "Total Days",
+        "Present",
+        "Absent",
+        "Late",
+        "Attendance %"
 
-        count = Enrollment.objects.filter(
-            admission__course_name=course
+    ]]
+
+    for batch in Batch.objects.all():
+
+        students = Enrollment.objects.filter(
+            batch=batch
         ).count()
 
-        course_data.append([
-            course.course_name,
-            count
+        present = Attendance.objects.filter(
+            batch=batch,
+            status='Present'
+        ).count()
+
+        absent = Attendance.objects.filter(
+            batch=batch,
+            status='Absent'
+        ).count()
+
+        late = Attendance.objects.filter(
+            batch=batch,
+            status='Late'
+        ).count()
+
+        total_days = Attendance.objects.filter(
+            batch=batch
+        ).count()
+
+        attendance_percentage = round(
+            (present / total_days) * 100,
+            1
+        ) if total_days else 0
+
+        analytics_data.append([
+
+            Paragraph(
+                batch.course.course_name,
+                styles['BodyText']
+            ),
+
+            batch.batch_name,
+
+            students,
+
+            total_days,
+
+            present,
+
+            absent,
+
+            late,
+
+            f"{attendance_percentage}%"
+
         ])
 
-    course_table = Table(
-        course_data
+    analytics_table = Table(
+
+        analytics_data,
+
+        colWidths=[
+            140,
+            75,
+            50,
+            55,
+            45,
+            45,
+            40,
+            68
+        ]
+
     )
 
-    course_table.setStyle(
+    analytics_table.setStyle(
 
         TableStyle([
 
-            ('BACKGROUND',(0,0),(-1,0),colors.lightgrey),
+            ('BACKGROUND',
+            (0,0),(-1,0),
+            colors.HexColor('#2563eb')),
 
-            ('GRID',(0,0),(-1,-1),1,colors.black)
+            ('TEXTCOLOR',
+            (0,0),(-1,0),
+            colors.white),
+
+            ('FONTNAME',
+            (0,0),(-1,0),
+            'Helvetica-Bold'),
+
+            ('GRID',
+            (0,0),(-1,-1),
+            1,
+            colors.black),
+
+            ('ALIGN',
+            (0,0),(-1,-1),
+            'CENTER'),
+
+            ('ROWBACKGROUNDS',
+            (0,1),(-1,-1),
+            [
+                colors.whitesmoke,
+                colors.lightgrey
+            ])
 
         ])
 
     )
 
-    elements.append(course_table)
+    elements.append(
+        analytics_table
+    )
 
     elements.append(
         Spacer(1,20)
     )
 
-    # Batch Analytics
+    # ======================
+    # ATTENDANCE SUMMARY
+    # ======================
 
     elements.append(
 
         Paragraph(
-            "Batch Analytics",
+            "Attendance Summary",
             styles['Heading2']
         )
 
     )
 
-    batch_data = [
-        ["Batch", "Students"]
+    good_count = 0
+    warning_count = 0
+    critical_count = 0
+    excellent_count = 0
+
+    report_students = get_report_students()
+
+    for student in report_students:
+
+        if student["status"] == "Excellent":
+
+            excellent_count += 1
+        
+        elif student["status"] == "Good":
+
+            good_count += 1
+
+        elif student["status"] == "Warning":
+
+            warning_count += 1
+
+        else:
+
+            critical_count += 1
+
+    attendance_summary = [
+
+        ["Status", "Students"],
+        
+        ["Excellent", excellent_count],
+
+        ["Good", good_count],
+
+        ["Warning", warning_count],
+
+        ["Critical", critical_count]
+
     ]
 
-    for batch in Batch.objects.all():
-
-        count = Enrollment.objects.filter(
-            batch=batch
-        ).count()
-
-        batch_data.append([
-            batch.batch_name,
-            count
-        ])
-
-    batch_table = Table(
-        batch_data
+    attendance_summary_table = Table(
+        attendance_summary,
+        colWidths=[180, 120]
     )
 
-    batch_table.setStyle(
+    attendance_summary_table.setStyle(
 
         TableStyle([
 
-            ('BACKGROUND',(0,0),(-1,0),colors.lightgrey),
+            ('BACKGROUND',
+            (0,0),(-1,0),
+            colors.HexColor('#059669')),
 
-            ('GRID',(0,0),(-1,-1),1,colors.black)
+            ('TEXTCOLOR',
+            (0,0),(-1,0),
+            colors.white),
+
+            ('FONTNAME',
+            (0,0),(-1,0),
+            'Helvetica-Bold'),
+
+            ('GRID',
+            (0,0),(-1,-1),
+            1,
+            colors.black),
+
+            ('ALIGN',
+            (0,0),(-1,-1),
+            'CENTER'),
+            
+            ('BACKGROUND',
+             (0,1),(-1,1),
+             colors.green), 
+            
+            ('BACKGROUND',
+            (0,1),(-1,1),
+            colors.lightgreen),
+
+            ('BACKGROUND',
+            (0,2),(-1,2),
+            colors.yellow),
+
+            ('BACKGROUND',
+            (0,3),(-1,3),
+            colors.salmon),
+
+            ('ROWBACKGROUNDS',
+            (0,1),(-1,-1),
+            [
+                colors.whitesmoke,
+                colors.lightgrey
+            ])
 
         ])
 
     )
 
-    elements.append(batch_table)
+    elements.append(
+        attendance_summary_table
+    )
 
     doc.build(elements)
 
     return response
 
 
+
+from openpyxl import Workbook
+from openpyxl.styles import (
+    Font,
+    PatternFill,
+    Alignment,
+    Border,
+    Side
+)
+from django.http import HttpResponse
+from django.utils import timezone
+
+
 def analytics_excel(request):
 
     wb = Workbook()
+    ws = wb.active
+    ws.title = "Attendance Analytics"
 
-    # Sheet 1
-    ws1 = wb.active
-    ws1.title = "Summary"
+    # ==========================
+    # Styles
+    # ==========================
 
-    total_students = Enrollment.objects.count()
+    title_fill = PatternFill(
+        "solid",
+        fgColor="1E3A8A"
+    )
+
+    header_fill = PatternFill(
+        "solid",
+        fgColor="2563EB"
+    )
+
+    section_fill = PatternFill(
+        "solid",
+        fgColor="059669"
+    )
+    
+    excellent_fill = PatternFill(
+    "solid",
+    fgColor="00B050"
+    )
+
+    good_fill = PatternFill(
+        "solid",
+        fgColor="C6EFCE"
+    )
+
+    warning_fill = PatternFill(
+        "solid",
+        fgColor="FFEB9C"
+    )
+
+    critical_fill = PatternFill(
+        "solid",
+        fgColor="FFC7CE"
+    )
+
+    white_font = Font(
+        color="FFFFFF",
+        bold=True
+    )
+
+    bold_font = Font(
+        bold=True
+    )
+
+    center = Alignment(
+        horizontal="center",
+        vertical="center"
+    )
+
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    # ==========================
+    # Real Time Data
+    # ==========================
 
     today = timezone.now().date()
+
+    total_students = Enrollment.objects.count()
 
     present_today = Attendance.objects.filter(
         attendance_date=today,
@@ -1807,53 +2445,349 @@ def analytics_excel(request):
         get_low_attendance_data()
     )
 
-    ws1.append(["Metric", "Value"])
+    latest_attendance = Attendance.objects.order_by(
+        '-attendance_date'
+    ).first()
 
-    ws1.append(["Total Students", total_students])
+    attendance_date = "-"
 
-    ws1.append(["Present Today", present_today])
+    if latest_attendance:
 
-    ws1.append(["Absent Today", absent_today])
+        attendance_date = latest_attendance.attendance_date.strftime(
+            "%d %b %Y"
+        )
 
-    ws1.append(["Low Attendance", low_attendance])
+    generated_date = timezone.now().strftime(
+        "%d %b %Y %I:%M %p"
+    )
 
-    # Sheet 2
-    ws2 = wb.create_sheet("Course Analytics")
+    # ==========================
+    # Title
+    # ==========================
 
-    ws2.append([
+    ws.merge_cells("A1:H1")
+
+    ws["A1"] = (
+        "CSC Computer Education - "
+        "Attendance Analytics Report"
+    )
+
+    ws["A1"].fill = title_fill
+    ws["A1"].font = Font(
+        color="FFFFFF",
+        bold=True,
+        size=16
+    )
+    ws["A1"].alignment = center
+
+    # ==========================
+    # Summary
+    # ==========================
+
+    ws.merge_cells("A3:B3")
+
+    ws["A3"] = "Summary Dashboard"
+
+    ws["A3"].fill = section_fill
+    ws["A3"].font = white_font
+
+    summary_data = [
+
+        ["Metric", "Value"],
+
+        ["Total Students",
+         total_students],
+
+        ["Present Today",
+         present_today],
+
+        ["Absent Today",
+         absent_today],
+
+        ["Low Attendance",
+         low_attendance],
+
+        ["Last Attendance Updated",
+         attendance_date],
+
+        ["Report Generated On",
+         generated_date]
+
+    ]
+
+    row_num = 4
+
+    for row in summary_data:
+
+        ws.append(row)
+
+        if row_num == 4:
+
+            for cell in ws[row_num]:
+                cell.fill = header_fill
+                cell.font = white_font
+
+        for cell in ws[row_num]:
+            cell.border = thin_border
+
+        row_num += 1
+
+    # ==========================
+    # Analytics Table
+    # ==========================
+
+    start_row = row_num + 2
+
+    ws.merge_cells(
+        f"A{start_row}:H{start_row}"
+    )
+
+    ws[f"A{start_row}"] = (
+        "Course & Batch Analytics"
+    )
+
+    ws[f"A{start_row}"].fill = section_fill
+    ws[f"A{start_row}"].font = white_font
+
+    analytics_header = [
+
         "Course",
-        "Students"
-    ])
-
-    for course in Course.objects.all():
-
-        count = Enrollment.objects.filter(
-            admission__course_name=course
-        ).count()
-
-        ws2.append([
-            course.course_name,
-            count
-        ])
-
-    # Sheet 3
-    ws3 = wb.create_sheet("Batch Analytics")
-
-    ws3.append([
         "Batch",
-        "Students"
-    ])
+        "Students",
+        "Total Days",
+        "Present",
+        "Absent",
+        "Late",
+        "Attendance %"
+
+    ]
+
+    header_row = start_row + 1
+
+    for col_num, value in enumerate(
+        analytics_header,
+        start=1
+    ):
+
+        cell = ws.cell(
+            row=header_row,
+            column=col_num
+        )
+
+        cell.value = value
+        cell.fill = header_fill
+        cell.font = white_font
+        cell.alignment = center
+        cell.border = thin_border
+
+    data_row = header_row + 1
 
     for batch in Batch.objects.all():
 
-        count = Enrollment.objects.filter(
+        students = Enrollment.objects.filter(
             batch=batch
         ).count()
 
-        ws3.append([
+        present = Attendance.objects.filter(
+            batch=batch,
+            status='Present'
+        ).count()
+
+        absent = Attendance.objects.filter(
+            batch=batch,
+            status='Absent'
+        ).count()
+
+        late = Attendance.objects.filter(
+            batch=batch,
+            status='Late'
+        ).count()
+
+        total_days = Attendance.objects.filter(
+            batch=batch
+        ).count()
+
+        attendance_percentage = round(
+            (present / total_days) * 100,
+            1
+        ) if total_days else 0
+
+        row_data = [
+
+            batch.course.course_name,
             batch.batch_name,
-            count
-        ])
+            students,
+            total_days,
+            present,
+            absent,
+            late,
+            f"{attendance_percentage}%"
+
+        ]
+
+        for col_num, value in enumerate(
+            row_data,
+            start=1
+        ):
+
+            cell = ws.cell(
+                row=data_row,
+                column=col_num
+            )
+
+            cell.value = value
+            cell.border = thin_border
+            cell.alignment = center
+
+        data_row += 1
+
+    # ==========================
+    # Attendance Summary
+    # ==========================
+
+    good_count = 0
+    warning_count = 0
+    critical_count = 0
+    excellent_count = 0
+
+    total_days = Attendance.objects.values(
+        'attendance_date'
+    ).distinct().count()
+
+    for enrollment in Enrollment.objects.all():
+
+        present_count = Attendance.objects.filter(
+            enrollment=enrollment,
+            status='Present'
+        ).count()
+
+        attendance_rate = round(
+            (present_count / total_days) * 100,
+            1
+        ) if total_days else 0
+        
+        if attendance_rate == 100:
+
+            excellent_count += 1
+
+        elif attendance_rate >= 75:
+
+            good_count += 1
+
+        elif attendance_rate >= 60:
+
+            warning_count += 1
+
+        else:
+
+            critical_count += 1
+
+    status_row = data_row + 2
+
+    ws.merge_cells(
+        f"A{status_row}:B{status_row}"
+    )
+
+    ws[f"A{status_row}"] = (
+        "Attendance Status Summary"
+    )
+
+    ws[f"A{status_row}"].fill = section_fill
+    ws[f"A{status_row}"].font = white_font
+
+    summary_header_row = status_row + 1
+
+    ws.cell(
+        summary_header_row,
+        1
+    ).value = "Status"
+
+    ws.cell(
+        summary_header_row,
+        2
+    ).value = "Students"
+
+    for col in range(1, 3):
+
+        ws.cell(
+            summary_header_row,
+            col
+        ).fill = header_fill
+
+        ws.cell(
+            summary_header_row,
+            col
+        ).font = white_font
+
+    status_data = [
+        
+        ["Excellent",
+         excellent_count,
+         excellent_fill],
+
+        ["Good",
+         good_count,
+         good_fill],
+
+        ["Warning",
+         warning_count,
+         warning_fill],
+
+        ["Critical",
+         critical_count,
+         critical_fill]
+
+    ]
+
+    current_row = summary_header_row + 1
+
+    for status, count, color in status_data:
+
+        ws.cell(
+            current_row,
+            1
+        ).value = status
+
+        ws.cell(
+            current_row,
+            2
+        ).value = count
+
+        for col in range(1, 3):
+
+            ws.cell(
+                current_row,
+                col
+            ).fill = color
+
+            ws.cell(
+                current_row,
+                col
+            ).border = thin_border
+
+            ws.cell(
+                current_row,
+                col
+            ).alignment = center
+
+        current_row += 1
+
+    # ==========================
+    # Column Width
+    # ==========================
+
+    ws.column_dimensions['A'].width = 30
+    ws.column_dimensions['B'].width = 20
+    ws.column_dimensions['C'].width = 12
+    ws.column_dimensions['D'].width = 15
+    ws.column_dimensions['E'].width = 12
+    ws.column_dimensions['F'].width = 12
+    ws.column_dimensions['G'].width = 12
+    ws.column_dimensions['H'].width = 15
+
+    # ==========================
+    # Response
+    # ==========================
 
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -1866,7 +2800,6 @@ def analytics_excel(request):
     wb.save(response)
 
     return response
-
 
 def report_pdf(request):
 
@@ -1884,14 +2817,53 @@ def report_pdf(request):
 
     elements = []
 
-    title = Paragraph(
-        "CSC Computer Education - Attendance Report",
-        styles['Title']
+    # Title
+
+    elements.append(
+        Paragraph(
+            "CSC Computer Education",
+            styles['Title']
+        )
     )
 
-    elements.append(title)
+    elements.append(
+        Paragraph(
+            "Student Attendance Report",
+            styles['Heading2']
+        )
+    )
 
-    elements.append(Spacer(1, 12))
+    latest_attendance = Attendance.objects.order_by(
+        '-attendance_date'
+    ).first()
+
+    attendance_date = "-"
+
+    if latest_attendance:
+
+        attendance_date = (
+            latest_attendance.attendance_date.strftime(
+                "%d %b %Y"
+            )
+        )
+
+    elements.append(
+
+        Paragraph(
+
+            f"Last Attendance Updated : {attendance_date}",
+
+            styles['Normal']
+
+        )
+
+    )
+
+    elements.append(
+        Spacer(1, 15)
+    )
+
+    # Table Data
 
     data = [[
 
@@ -1912,12 +2884,14 @@ def report_pdf(request):
 
         data.append([
 
-            f"{student['student'].first_name} {student['student'].last_name}",
+            f"{student['student'].first_name} "
+            f"{student['student'].last_name}",
 
             student['course'].course_name,
 
             student['batch'].batch_name
-            if student['batch'] else "-",
+            if student['batch']
+            else "-",
 
             student['present_count'],
 
@@ -1931,32 +2905,190 @@ def report_pdf(request):
 
         ])
 
-    table = Table(data)
-
-    table.setStyle(
-
-        TableStyle([
-
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-
-        ])
-
+    table = Table(
+        data,
+        colWidths=[
+            90,
+            105,
+            65,
+            45,
+            45,
+            35,
+            75,
+            65
+        ]
     )
 
-    elements.append(table)
+    table_style = TableStyle([
 
-    doc.build(elements)
+        (
+            'BACKGROUND',
+            (0, 0),
+            (-1, 0),
+            colors.HexColor('#1E40AF')
+        ),
+
+        (
+            'TEXTCOLOR',
+            (0, 0),
+            (-1, 0),
+            colors.white
+        ),
+
+        (
+            'FONTNAME',
+            (0, 0),
+            (-1, 0),
+            'Helvetica-Bold'
+        ),
+
+        (
+            'GRID',
+            (0, 0),
+            (-1, -1),
+            1,
+            colors.black
+        ),
+
+        (
+            'ALIGN',
+            (0, 0),
+            (-1, -1),
+            'CENTER'
+        ),
+
+        (
+            'VALIGN',
+            (0, 0),
+            (-1, -1),
+            'MIDDLE'
+        ),
+
+        (
+            'ROWBACKGROUNDS',
+            (0, 1),
+            (-1, -1),
+            [
+                colors.white,
+                colors.HexColor('#F3F4F6')
+            ]
+        )
+
+    ])
+
+    # Status & Attendance Color
+
+    for row_num, student in enumerate(
+        students,
+        start=1
+    ):
+
+        status = student['status']
+
+        attendance_rate = (
+            student['attendance_rate']
+        )
+
+        # Status Color
+
+        if status == "Excellent":
+
+            table_style.add(
+                'TEXTCOLOR',
+                (7, row_num),
+                (7, row_num),
+                colors.HexColor('#00B050')
+            )
+
+        elif status == "Good":
+
+            table_style.add(
+                'TEXTCOLOR',
+                (7, row_num),
+                (7, row_num),
+                colors.HexColor('#2563EB')
+            )
+
+        elif status == "Warning":
+
+            table_style.add(
+                'TEXTCOLOR',
+                (7, row_num),
+                (7, row_num),
+                colors.HexColor('#F59E0B')
+            )
+
+        else:
+
+            table_style.add(
+                'TEXTCOLOR',
+                (7, row_num),
+                (7, row_num),
+                colors.HexColor('#DC2626')
+            )
+
+        # Attendance % Color
+
+        if attendance_rate == 100:
+
+            table_style.add(
+                'TEXTCOLOR',
+                (6, row_num),
+                (6, row_num),
+                colors.HexColor('#00B050')
+            )
+
+        elif attendance_rate >= 75:
+
+            table_style.add(
+                'TEXTCOLOR',
+                (6, row_num),
+                (6, row_num),
+                colors.HexColor('#2563EB')
+            )
+
+        elif attendance_rate >= 60:
+
+            table_style.add(
+                'TEXTCOLOR',
+                (6, row_num),
+                (6, row_num),
+                colors.HexColor('#F59E0B')
+            )
+
+        else:
+
+            table_style.add(
+                'TEXTCOLOR',
+                (6, row_num),
+                (6, row_num),
+                colors.HexColor('#DC2626')
+            )
+
+    table.setStyle(
+        table_style
+    )
+
+    elements.append(
+        table
+    )
+
+    doc.build(
+        elements
+    )
 
     return response
 
+from openpyxl.styles import (
+    Font,
+    PatternFill,
+    Alignment,
+    Border,
+    Side
+)
 
 def report_excel(request):
+
 
     wb = Workbook()
 
@@ -1964,45 +3096,386 @@ def report_excel(request):
 
     ws.title = "Attendance Report"
 
+    # ---------- TITLE ----------
+
+    ws.merge_cells('A1:H1')
+
+    ws['A1'] = "CSC Computer Education"
+
+    ws['A1'].font = Font(
+        size=18,
+        bold=True,
+        color="1E293B"
+    )
+
+    ws['A1'].alignment = Alignment(
+        horizontal="center"
+    )
+
+    ws.merge_cells('A2:H2')
+
+    ws['A2'] = "Student Attendance Report"
+
+    ws['A2'].font = Font(
+        size=14,
+        bold=True
+    )
+
+    ws['A2'].alignment = Alignment(
+        horizontal="center"
+    )
+
+    # ---------- DATES ----------
+
+    latest_attendance = Attendance.objects.order_by(
+        '-attendance_date'
+    ).first()
+
+    attendance_date = "-"
+
+    if latest_attendance:
+
+        attendance_date = (
+            latest_attendance.attendance_date.strftime(
+                "%d %b %Y"
+            )
+        )
+
+    ws['A4'] = "Generated On"
+    ws['B4'] = timezone.now().strftime(
+        "%d %b %Y"
+    )
+
+    ws['D4'] = "Last Attendance Updated"
+    ws['E4'] = attendance_date
+
+    # ---------- HEADER ----------
+
     headers = [
 
         "Student Name",
         "Course",
         "Batch",
-        "Present Days",
-        "Absent Days",
-        "Late Days",
+        "Present",
+        "Absent",
+        "Late",
         "Attendance %",
         "Status"
 
     ]
 
-    ws.append(headers)
+    header_row = 6
+
+    for col_num, header in enumerate(
+        headers,
+        start=1
+    ):
+
+        cell = ws.cell(
+            row=header_row,
+            column=col_num
+        )
+
+        cell.value = header
+
+        cell.font = Font(
+            bold=True,
+            color="FFFFFF"
+        )
+
+        cell.fill = PatternFill(
+            "solid",
+            fgColor="1E40AF"
+        )
+
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
 
     students = get_report_students()
 
+    row_num = 7
+
+    thin_border = Border(
+
+        left=Side(style='thin'),
+
+        right=Side(style='thin'),
+
+        top=Side(style='thin'),
+
+        bottom=Side(style='thin')
+
+    )
+
+    excellent_count = 0
+    good_count = 0
+    warning_count = 0
+    critical_count = 0
+
     for student in students:
 
-        ws.append([
+        ws.cell(
+            row=row_num,
+            column=1
+        ).value = (
+            f"{student['student'].first_name} "
+            f"{student['student'].last_name}"
+        )
 
-            f"{student['student'].first_name} {student['student'].last_name}",
+        ws.cell(
+            row=row_num,
+            column=2
+        ).value = (
+            student['course'].course_name
+        )
 
-            student['course'].course_name,
-
+        ws.cell(
+            row=row_num,
+            column=3
+        ).value = (
             student['batch'].batch_name
-            if student['batch'] else "-",
+            if student['batch']
+            else "-"
+        )
 
-            student['present_count'],
+        ws.cell(
+            row=row_num,
+            column=4
+        ).value = (
+            student['present_count']
+        )
 
-            student['absent_count'],
+        ws.cell(
+            row=row_num,
+            column=5
+        ).value = (
+            student['absent_count']
+        )
 
-            student['late_count'],
+        ws.cell(
+            row=row_num,
+            column=6
+        ).value = (
+            student['late_count']
+        )
 
-            student['attendance_rate'],
+        ws.cell(
+            row=row_num,
+            column=7
+        ).value = (
+            f"{student['attendance_rate']}%"
+        )
 
+        ws.cell(
+            row=row_num,
+            column=8
+        ).value = (
             student['status']
+        )
 
-        ])
+        # Alternate Row Color
+
+        if row_num % 2 == 0:
+
+            for col in range(1, 9):
+
+                ws.cell(
+                    row=row_num,
+                    column=col
+                ).fill = PatternFill(
+                    "solid",
+                    fgColor="F8FAFC"
+                )
+
+        # Attendance %
+
+        attendance_cell = ws.cell(
+            row=row_num,
+            column=7
+        )
+
+        rate = student[
+            'attendance_rate'
+        ]
+
+        if rate == 100:
+
+            attendance_cell.font = Font(
+                color="00B050",
+                bold=True
+            )
+
+        elif rate >= 76:
+
+            attendance_cell.font = Font(
+                color="2563EB",
+                bold=True
+            )
+
+        elif rate >= 60:
+
+            attendance_cell.font = Font(
+                color="F59E0B",
+                bold=True
+            )
+
+        else:
+
+            attendance_cell.font = Font(
+                color="DC2626",
+                bold=True
+            )
+
+        # Status Colors
+
+        status_cell = ws.cell(
+            row=row_num,
+            column=8
+        )
+
+        if student['status'] == "Excellent":
+
+            excellent_count += 1
+
+            status_cell.fill = PatternFill(
+                "solid",
+                fgColor="00B050"
+            )
+
+            status_cell.font = Font(
+                color="FFFFFF",
+                bold=True
+            )
+
+        elif student['status'] == "Good":
+
+            good_count += 1
+
+            status_cell.fill = PatternFill(
+                "solid",
+                fgColor="2563EB"
+            )
+
+            status_cell.font = Font(
+                color="FFFFFF",
+                bold=True
+            )
+
+        elif student['status'] == "Warning":
+
+            warning_count += 1
+
+            status_cell.fill = PatternFill(
+                "solid",
+                fgColor="F59E0B"
+            )
+
+            status_cell.font = Font(
+                color="FFFFFF",
+                bold=True
+            )
+
+        else:
+
+            critical_count += 1
+
+            status_cell.fill = PatternFill(
+                "solid",
+                fgColor="DC2626"
+            )
+
+            status_cell.font = Font(
+                color="FFFFFF",
+                bold=True
+            )
+
+        for col in range(1, 9):
+
+            cell = ws.cell(
+                row=row_num,
+                column=col
+            )
+
+            cell.alignment = Alignment(
+                horizontal="center",
+                vertical="center"
+            )
+
+            cell.border = thin_border
+
+        row_num += 1
+
+    # ---------- SUMMARY ----------
+
+    summary_row = row_num + 2
+
+    ws.merge_cells(
+        f'A{summary_row}:H{summary_row}'
+    )
+
+    ws[
+        f'A{summary_row}'
+    ] = "Attendance Summary"
+
+    ws[
+        f'A{summary_row}'
+    ].font = Font(
+        bold=True,
+        size=14
+    )
+
+    ws.cell(
+        summary_row + 1,
+        1
+    ).value = "Excellent"
+
+    ws.cell(
+        summary_row + 1,
+        2
+    ).value = excellent_count
+
+    ws.cell(
+        summary_row + 2,
+        1
+    ).value = "Good"
+
+    ws.cell(
+        summary_row + 2,
+        2
+    ).value = good_count
+
+    ws.cell(
+        summary_row + 3,
+        1
+    ).value = "Warning"
+
+    ws.cell(
+        summary_row + 3,
+        2
+    ).value = warning_count
+
+    ws.cell(
+        summary_row + 4,
+        1
+    ).value = "Critical"
+
+    ws.cell(
+        summary_row + 4,
+        2
+    ).value = critical_count
+
+    # ---------- COLUMN WIDTH ----------
+
+    ws.column_dimensions['A'].width = 25
+    ws.column_dimensions['B'].width = 25
+    ws.column_dimensions['C'].width = 15
+    ws.column_dimensions['D'].width = 12
+    ws.column_dimensions['E'].width = 12
+    ws.column_dimensions['F'].width = 12
+    ws.column_dimensions['G'].width = 15
+    ws.column_dimensions['H'].width = 15
 
     response = HttpResponse(
 
@@ -2012,7 +3485,9 @@ def report_excel(request):
     )
 
     response['Content-Disposition'] = (
+
         'attachment; filename=attendance_report.xlsx'
+
     )
 
     wb.save(response)

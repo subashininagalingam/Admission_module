@@ -55,6 +55,16 @@ urlpatterns = [
     name='absent_tracker'
 ),
     path(
+    'get-admin-notes/<int:tracker_id>/',
+    views.get_admin_notes,
+    name='get_admin_notes'
+),
+    path(
+    "save-admin-notes/",
+    views.save_admin_notes,
+    name="save_admin_notes"
+),
+    path(
     'low-attendance-alerts/',
     views.low_attendance_alerts,
     name='low_attendance_alerts'
@@ -118,7 +128,6 @@ path(
     views.report_excel,
     name='report_excel'
 ),
-
 
 
     path(

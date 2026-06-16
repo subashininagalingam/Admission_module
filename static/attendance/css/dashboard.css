@@ -145,6 +145,36 @@ h3{
 }
 
 
+.batch-detail-card {
+    background: rgb(30, 42, 120);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    color: rgb(255, 202, 43);
+    text-align: center;
+    border: 1px solid rgb(255, 202, 43);
+}
+
+.detail-row {
+    display: flex;
+    margin-bottom: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+.label {
+    width: 80px;
+    font-weight: 600;
+    
+}
+
+.value {
+    flex: 1;
+}
+
+
+
+
 /* Tablet */
 
 @media(max-width:1024px){
