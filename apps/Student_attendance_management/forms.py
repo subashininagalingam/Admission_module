@@ -40,6 +40,7 @@ class BatchForm(forms.ModelForm):
                 'class':'form-control',
                 'type':'date',
                 'required':True,
+                'readonly': True,
             }),
 
             'start_time': forms.TimeInput(attrs={

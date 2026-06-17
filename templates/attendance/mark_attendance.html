@@ -158,6 +158,9 @@
                                 <span id="minutesUnit" class="input-group-text" style="display:none;">mins</span>
                             </div>
                         </div>
+                        <div id="durationError"
+                         class="text-danger mt-1">
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -420,8 +423,12 @@
             return;
         }
 
+        document.getElementById("durationError").innerText = "";
+
         if (duration <= 0) {
-            alert("Enter valid duration");
+            document.getElementById("durationError").innerText =
+        "Duration is required";
+
             return;
         }
 
@@ -554,12 +561,20 @@
     document.getElementById('attendancePercentage').innerText =
         percentage + "% Present";
 
-    function toggleUnit(inputId, unitId) {
+
+function toggleUnit(inputId, unitId) {
 
     const input = document.getElementById(inputId);
     const unit = document.getElementById(unitId);
 
     unit.style.display = input.value ? 'flex' : 'none';
+
+    if (
+        document.getElementById("durationHours").value ||
+        document.getElementById("durationMinutes").value
+    ) {
+        document.getElementById("durationError").innerText = "";
+    }
 }
 
 </script>

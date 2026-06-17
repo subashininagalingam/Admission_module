@@ -49,6 +49,8 @@ urlpatterns = [
 
     path("dashboard-api/",views.dashboard_api,name="dashboard_api"),
 
+    path('course-duration/<int:course_id>/',views.get_course_duration,name='course-duration'),
+
      path(
     'absent-tracker/',
     views.absent_tracker,

@@ -651,11 +651,12 @@
 
             const percentageMatch =
 
-                percentageValue === ""
+    percentageValue === ""
 
-                ||
+    ||
 
-                attendance <= parseFloat(percentageValue);
+    attendance.toFixed(1) ===
+    parseFloat(percentageValue).toFixed(1);
 
             const nameMatch =
 

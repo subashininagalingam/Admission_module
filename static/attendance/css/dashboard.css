@@ -175,53 +175,142 @@ h3{
 
 
 
-/* Tablet */
+/* Tablet View */
+@media (max-width: 1024px) {
 
-@media(max-width:1024px){
+    .main-content {
+        margin-left: 0;
+        padding: 15px;
+    }
 
-    .stats-grid{
-        grid-template-columns:repeat(2,1fr);
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .topbar{
+    background:white;
+    padding:20px;
+    border-radius:16px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+}
+
+.search-box{
+    flex:1;
+    max-width:400px;
+}
+
+    .search-box,
+    .search-box input {
+        width: 100%;
+    }
+
+    .profile {
+        justify-content: center;
+    }
+}
+
+
+/* Mobile View */
+@media (max-width: 768px) {
+
+    body {
+        padding-left: 0;
+        zoom: 100%;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 10px;
+        zoom: 1;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+   .topbar{
+    background:white;
+    padding:20px;
+    border-radius:16px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+}
+
+.search-box{
+    flex:1;
+    max-width:400px;
+}
+
+    .search-box input {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .profile {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .card {
+        padding: 18px;
+    }
+
+    .card h2 {
+        font-size: 32px;
+    }
+
+    .batch-detail-card {
+        padding: 12px;
+    }
+
+    .detail-row {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .label {
+        width: auto;
+    }
+}
+
+
+/* Small Mobile */
+@media (max-width: 480px) {
+
+    h2 {
+        font-size: 22px;
+    }
+
+    .card h2 {
+        font-size: 28px;
+    }
+
+    .card h3 {
+        font-size: 16px;
+    }
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
 
     .topbar{
         flex-direction:column;
+        align-items:stretch;
         gap:15px;
     }
 
-    .topbar input{
-        width:100%;
-    }
-}
-
-/* Mobile */
-
-@media(max-width:768px){
-
-    .sidebar{
-        left:-260px;
-        transition:.3s;
+    .search-box {
+        width: 100%;
     }
 
-    .sidebar.show{
-        left:0;
-    }
-
-    .main-content{
-        margin-left:0;
-        padding:15px;
-    }
-
-    .stats-grid{
-        grid-template-columns:repeat(2,1fr);
-    }
-
-    .card h2{
-        font-size:32px;
-    }
-}
-
-@media(max-width:480px){
-    .stats-grid{
-        grid-template-columns:1fr;
+    .profile img {
+        width: 40px;
+        height: 40px;
     }
 }

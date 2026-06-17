@@ -22,9 +22,23 @@
             <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search by Name or ID"
                 class="form-control">
 
-            <input type="date" name="from_date" value="{{ request.GET.from_date }}" class="form-control">
+            <div class="form-floating">
+    <input type="date"
+           class="form-control"
+           id="fromDate"
+           name="from_date"
+           value="{{ request.GET.from_date }}">
+    <label for="fromDate">From Date</label>
+</div>
 
-            <input type="date" name="to_date" value="{{ request.GET.to_date }}" class="form-control">
+            <div class="form-floating">
+    <input type="date"
+           class="form-control"
+           id="toDate"
+           name="to_date"
+           value="{{ request.GET.to_date }}">
+    <label for="toDate">To Date</label>
+</div>
 
             <select name="status" class="form-select">
 

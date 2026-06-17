@@ -46,41 +46,48 @@ class BatchSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-
         trainer = data.get('trainer')
         timing = data.get('timing')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
 
-        if trainer:
-            batch_exists = Batch.objects.filter(
-                trainer=trainer,
-                timing=timing
-            ).exists()
-
-            if batch_exists:
-                raise serializers.ValidationError({
-                    "trainer": [
-                        "Trainer already assigned to another batch in this time slot."
-                    ]
-                })
-            
         today = timezone.now().date()
-
-        start_date = data.get("start_date")
-        end_date = data.get("end_date")
 
         if start_date <= today:
             raise serializers.ValidationError({
-                "start_date": "Start date must be a future date."
-            })
+            "start_date": "Start date must be a future date."
+        })
 
         if end_date <= today:
             raise serializers.ValidationError({
-                "end_date": "End date must be a future date."
-            })
+            "end_date": "End date must be a future date."
+        })
 
         if end_date < start_date:
             raise serializers.ValidationError({
-                "end_date": "End date cannot be before start date."
+            "end_date": "End date cannot be before start date."
+        })
+
+        # Trainer overlap validation
+        if trainer and start_date and end_date:
+            overlapping_batches = Batch.objects.filter(
+            trainer=trainer,
+            timing=timing,
+            start_date__lte=end_date,
+            end_date__gte=start_date
+        )
+
+        # Update time exclude current batch
+            if self.instance:
+                overlapping_batches = overlapping_batches.exclude(
+                pk=self.instance.pk
+            )
+
+            if overlapping_batches.exists():
+                raise serializers.ValidationError({
+                "trainer": [
+                    "Trainer already assigned to another batch during this period."
+                ]
             })
 
         return data

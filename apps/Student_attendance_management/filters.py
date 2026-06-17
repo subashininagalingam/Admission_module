@@ -61,15 +61,14 @@ class AttendanceFilter(django_filters.FilterSet):
         fields = ['from_date', 'to_date', 'status', 'batch', 'course_name']
 
     def custom_search(self, queryset, name, value):
-        terms = value.split()
-        query = Q()
+        query = (
+        Q(enrollment__admission__student__first_name__icontains=value) |
+        Q(enrollment__admission__student__last_name__icontains=value)
+    )
 
-        for term in terms:
-            query &= (
-                Q(enrollment__admission__student__first_name__iexact=term) |
-                Q(enrollment__admission__student__last_name__iexact=term)  |
-                Q(enrollment__admission__student__id__iexact=term) 
-               
-            )
+        student_id = value.upper().replace("STU", "")
+
+        if student_id.isdigit():
+            query |= Q(enrollment__admission__student__id=int(student_id))
 
         return queryset.filter(query).distinct()

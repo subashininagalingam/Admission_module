@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 # from apps.admissions.models import (
 #     Course,
@@ -137,18 +138,22 @@ class Batch(models.Model):
                 'max_students': 'Maximum students must be greater than 0.'
             })
 
-        # Same trainer cannot have overlapping batch timings
-        if self.trainer:
-            existing_batch = Batch.objects.exclude(pk=self.pk).filter(
-                trainer=self.trainer,
-                start_date=self.start_date,
-                timing=self.timing
-            )
+        # Same trainer cannot have overlapping batch duration
+        if self.trainer and self.end_date:
+            overlapping_batches = Batch.objects.exclude(
+            pk=self.pk
+        ).filter(
+        trainer=self.trainer,
+        timing=self.timing,
+        start_date__lte=self.end_date,
+        end_date__gte=self.start_date
+    )
 
-            if existing_batch.exists():
-                raise ValidationError({
-                    'trainer': 'Trainer already assigned to another batch in this time slot.'
-                })
+        if overlapping_batches.exists():
+            raise ValidationError({
+            'trainer':
+            'Trainer already assigned to another batch for this timing during the selected period.'
+        })
 
         # Completed batch must have end date
         if self.status == 'Completed' and not self.end_date:

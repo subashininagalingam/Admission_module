@@ -472,6 +472,47 @@
         endDate.addEventListener("change", validateDates);
     });
 
+
+    async function autoCalculateEndDate() {
+
+    const courseId =
+        document.getElementById("id_course").value;
+
+    const startDate =
+        document.getElementById("id_start_date").value;
+
+    if (!courseId || !startDate) {
+        return;
+    }
+
+    const response = await fetch(
+        `/api/course-duration/${courseId}/`
+    );
+
+    const data = await response.json();
+
+    let endDate = new Date(startDate);
+
+    endDate.setMonth(
+        endDate.getMonth() + data.duration
+    );
+
+    document.getElementById("id_end_date").value =
+        endDate.toISOString().split("T")[0];
+}
+
+document.getElementById("id_course")
+    .addEventListener(
+        "change",
+        autoCalculateEndDate
+    );
+
+document.getElementById("id_start_date")
+    .addEventListener(
+        "change",
+        autoCalculateEndDate
+    );
+
 </script>
 
 {% endblock %}

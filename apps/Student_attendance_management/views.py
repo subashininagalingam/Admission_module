@@ -231,6 +231,26 @@ class SyllabusLogViewSet(viewsets.ModelViewSet):
     serializer_class = SyllabusLogSerializer
 
 
+from django.http import JsonResponse
+from apps.admissions.models import Course
+
+def get_course_duration(request, course_id):
+
+    try:
+        course = Course.objects.get(id=course_id)
+
+        return JsonResponse({
+            "duration": course.duration
+        })
+
+    except Course.DoesNotExist:
+
+        return JsonResponse(
+            {"error": "Course not found"},
+            status=404
+        )
+
+
 def dashboard_api(request):
 
     search = request.GET.get("search", "")
@@ -910,6 +930,15 @@ def low_attendance_alerts(request):
             if student["batch"].lower() == batch_filter.lower()
         ]
 
+    attendance_filter = request.GET.get("attendance")
+
+    if attendance_filter:
+        low_attendance_students = [
+        student
+        for student in low_attendance_students
+        if student["attendance_percentage"] == float(attendance_filter)
+    ]
+
     critical_students = [
         student
         for student in low_attendance_students
@@ -1532,35 +1561,38 @@ def reports(request):
         for enrollment in enrollments:
 
             present_count = Attendance.objects.filter(
-                enrollment=enrollment
-               
-            ).filter(
-                Q(status='Present') |
-                Q(status='Late')
+                enrollment=enrollment,
+                status='Present'
             ).count()
 
             absent_count = Attendance.objects.filter(
-              enrollment=enrollment,
-              status='Absent'
+                enrollment=enrollment,
+                status='Absent'
+            ).count()
+
+            late_count = Attendance.objects.filter(
+                enrollment=enrollment,
+                status='Late'
             ).count()
 
             total_days = (
-                 present_count +
-                 absent_count
+                present_count +
+                absent_count +
+                late_count
             )
 
-            attendance_rate = (
-                round(
-                    (present_count / total_days) * 100,
-                    1
-                )
-                if total_days > 0 else 0
+            effective_present = (
+                present_count +
+                late_count
             )
+
+            attendance_rate = round(
+            (effective_present / total_days) * 100,
+            1
+            ) if total_days else 0
+            
             if attendance_filter:
-
-                if attendance_rate < float(
-                    attendance_filter
-                ):
+                if round(attendance_rate, 1) != round(float(attendance_filter), 1):
                     continue
 
             if attendance_rate == 100:
@@ -1625,11 +1657,8 @@ def reports(request):
 
     
         if attendance_filter:
-
-            if attendance_rate < float(
-                attendance_filter
-            ):
-                continue
+                if round(attendance_rate, 1) != round(float(attendance_filter), 1):
+                    continue
 
         if attendance_rate == 100:
             status = "Excellent"

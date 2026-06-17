@@ -110,7 +110,7 @@ class Payment(models.Model):
 class Course(models.Model):
     course_name = models.CharField(max_length=50, null=False, blank=False)
 
-    duration = models.CharField(max_length=20 ,null=False, blank=False)
+    duration = models.PositiveIntegerField(default=3)
     course_fee = models.IntegerField(null=False, blank=False)
 
     def __str__(self):
