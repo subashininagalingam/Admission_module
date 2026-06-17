@@ -27,9 +27,9 @@ def get_absent_tracker_data():
             .order_by('-attendance_date')
         )
         
-        tracker = AbsentTracker.objects.filter(
+        tracker, created = AbsentTracker.objects.get_or_create(
             enrollment=enrollment
-        ).first()
+        )
 
         total_absences = attendance_records.filter(
             status='Absent'
@@ -58,10 +58,10 @@ def get_absent_tracker_data():
         else:
             attendance_percentage = 100
 
-        if consecutive_absences >= 5:
+        if total_absences >= 3:
             alert_level = "Critical"
 
-        elif consecutive_absences >= 3 or total_absences >= 5:
+        elif  total_absences == 2:
             alert_level = "Medium"
 
         else:
@@ -91,6 +91,13 @@ def get_absent_tracker_data():
             attendance_status = "Complete"
         else:
             attendance_status = "Incomplete"
+
+        tracker, created = AbsentTracker.objects.get_or_create(
+             enrollment=enrollment
+        )
+
+        tracker.attendance_status = attendance_status
+        tracker.save()
 
         students_data.append({
             

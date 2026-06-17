@@ -859,31 +859,31 @@ def save_admin_notes(request):
 
     tracker_id = data.get("tracker_id")
 
-    notes = data.get("notes")
-
-    print("TRACKER ID =", tracker_id)
+    if not tracker_id or tracker_id == "None":
+        return JsonResponse({
+        "status": "error",
+        "message": "Tracker ID not found"
+    }, status=400)
 
     tracker = AbsentTracker.objects.filter(
-        id=tracker_id
+    id=int(tracker_id)
     ).first()
 
-    print("TRACKER =", tracker)
-
     if not tracker:
-
         return JsonResponse({
-            "status": "error",
-            "message": "Tracker not found"
-        })
+        "status": "error",
+        "message": "Tracker not found"
+    })
+
+    notes = data.get("notes", "")
 
     tracker.admin_notes = notes
-
     tracker.save()
 
     return JsonResponse({
         "status": "success"
     })
-    
+
 from .services import get_low_attendance_data
 from django.core.mail import send_mail
 from django.conf import settings
@@ -1538,6 +1538,16 @@ def reports(request):
                 Q(status='Present') |
                 Q(status='Late')
             ).count()
+
+            absent_count = Attendance.objects.filter(
+              enrollment=enrollment,
+              status='Absent'
+            ).count()
+
+            total_days = (
+                 present_count +
+                 absent_count
+            )
 
             attendance_rate = (
                 round(
