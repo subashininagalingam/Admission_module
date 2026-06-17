@@ -87,16 +87,16 @@ DATABASES = {
    'default': dj_database_url.parse(os.environ.get("DATABASE_URL"))
 }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'CSC_CRM',
-        'USER' :'postgres',
-        'PASSWORD' :'suba',
-        'HOST' :'localhost',
-        'PORT' :'5432',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'CSC_CRM',
+#         'USER' :'postgres',
+#         'PASSWORD' :'suba',
+#         'HOST' :'localhost',
+#         'PORT' :'5432',
+#     }
+# }
 
 
 # Password validation
