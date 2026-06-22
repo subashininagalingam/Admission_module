@@ -315,27 +315,45 @@
 
         batches.forEach(batch => {
 
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            //const today = new Date();
+            //today.setHours(0, 0, 0, 0);
 
-            const startDate = new Date(batch.start_date);
+            //const startDate = new Date(batch.start_date);
 
-            const isUpcoming = startDate > today;
+            //const isUpcoming = startDate > today;
+
+            const today = new Date().toISOString().split("T")[0];
+
+            const isUpcoming = batch.start_date > today;
+            const isCompleted = batch.end_date < today;
+            const isOngoing = !isUpcoming && !isCompleted;
 
 
             console.log(batch);
 
             totalStudents += batch.student_count
 
-            if (batch.is_marked) markedCount++
-            else notMarkedCount++
+            //if (batch.is_marked) markedCount++
+            // else notMarkedCount++
+
+            if (isOngoing) {
+
+                if (batch.is_marked) {
+                    markedCount++;
+                } else {
+                    notMarkedCount++;
+                }
+
+            }
 
             container.innerHTML += `
         <div class="col-lg-4 col-md-6">
             <div class="batch-card ${isUpcoming ? 'upcoming' : ''}" id="batch-${batch.id}">
 
                 <div class="d-flex justify-content-between">
-                    <h4>${batch.course_name} ${batch.batch_name}</h4>
+                    <h4 class="batch-title">
+    ${batch.course_name} ${batch.batch_name}
+</h4>
 
                     <span class="status ${batch.is_marked ? 'marked' : 'not-marked'}">
                         ${batch.is_marked ? 'Marked' : 'Not Marked'}
@@ -349,11 +367,15 @@
 
                 ${isUpcoming
                     ? `<button class="btn-attendance" disabled>
-            Upcoming
+        Upcoming
        </button>`
-                    : `<button class="btn-attendance"
-            onclick="window.location.href='/api/mark-attendance/${batch.id}/'">
-            ${batch.is_marked ? 'Update Entry' : 'Mark Attendance'}
+                    : isCompleted
+                        ? `<button class="btn-attendance" disabled>
+        Completed
+       </button>`
+                        : `<button class="btn-attendance"
+        onclick="window.location.href='/api/mark-attendance/${batch.id}/'">
+        ${batch.is_marked ? 'Update Entry' : 'Mark Attendance'}
        </button>`
                 }
 
@@ -475,43 +497,43 @@
 
     async function autoCalculateEndDate() {
 
-    const courseId =
-        document.getElementById("id_course").value;
+        const courseId =
+            document.getElementById("id_course").value;
 
-    const startDate =
-        document.getElementById("id_start_date").value;
+        const startDate =
+            document.getElementById("id_start_date").value;
 
-    if (!courseId || !startDate) {
-        return;
+        if (!courseId || !startDate) {
+            return;
+        }
+
+        const response = await fetch(
+            `/api/course-duration/${courseId}/`
+        );
+
+        const data = await response.json();
+
+        let endDate = new Date(startDate);
+
+        endDate.setMonth(
+            endDate.getMonth() + data.duration
+        );
+
+        document.getElementById("id_end_date").value =
+            endDate.toISOString().split("T")[0];
     }
 
-    const response = await fetch(
-        `/api/course-duration/${courseId}/`
-    );
+    document.getElementById("id_course")
+        .addEventListener(
+            "change",
+            autoCalculateEndDate
+        );
 
-    const data = await response.json();
-
-    let endDate = new Date(startDate);
-
-    endDate.setMonth(
-        endDate.getMonth() + data.duration
-    );
-
-    document.getElementById("id_end_date").value =
-        endDate.toISOString().split("T")[0];
-}
-
-document.getElementById("id_course")
-    .addEventListener(
-        "change",
-        autoCalculateEndDate
-    );
-
-document.getElementById("id_start_date")
-    .addEventListener(
-        "change",
-        autoCalculateEndDate
-    );
+    document.getElementById("id_start_date")
+        .addEventListener(
+            "change",
+            autoCalculateEndDate
+        );
 
 </script>
 

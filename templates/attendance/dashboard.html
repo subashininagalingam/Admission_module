@@ -14,8 +14,8 @@
 
     <div class="topbar">
         <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Search by Batch, Course, Trainer, Timing...">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by Batch, Course, Trainer, Timing...">
         </div>
 
         <div class="profile">
@@ -27,148 +27,219 @@
         </div>
     </div><br>
 
-    <h2>Attendance Dashboard</h2>
+    <h2 class="dashboard-title">
+        📊 Attendance Dashboard
+        <span id="dashboardTitle" class="dashboard-subtitle">
+            Overall Summary
+        </span>
+    </h2>
 
-    <div class="batch-detail-card"
-     id="batchDetailCard"
-     style="display:none;">
+    <div class="batch-detail-card" id="batchDetailCard" style="display:none;">
 
-    <h4>Batch Details</h4>
+        <h4>Batch Details</h4>
 
-    <div id="batchList"></div>
+        <div id="batchList"></div>
 
-</div><br>
+    </div><br>
 
     <div class="stats-grid">
 
-    <div class="card">
-    <div style="display: flex;">
-    <div class="icon-box icon-students">
-        <i class="fa-solid fa-users"></i>
-    </div>
-    <div style="margin-left: 5px;">
-    <h3>Total Students</h3></div>
-    </div>
-    <h2 id="totalCount">{{ total }}</h2>
-    <p>
-    {% if total_percentage >= 0 %}
-        +{{ total_percentage }}%
-    {% else %}
-        {{ total_percentage }}%
-    {% endif %}
-    vs last month
-</p>
-</div>
+        <div class="card">
+            <div style="display: flex;">
+                <div class="icon-box icon-students">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div style="margin-left: 5px;">
+                    <h3>Total Students</h3>
+                </div>
+            </div>
+            <h2 id="totalCount">{{ total }}</h2>
+            <p>
+                {% if total_percentage >= 0 %}
+                +{{ total_percentage }}%
+                {% else %}
+                {{ total_percentage }}%
+                {% endif %}
+                vs last month
+            </p>
+        </div>
 
-<div class="card">
-    <div style="display: flex;">
-    <div class="icon-box icon-marked">
-        <i class="fa-solid fa-check"></i>
-    </div>
-    <div style="margin-left: 5px;">
-    <h3>Present Today</h3></div>
-    </div>
-    <h2 id="presentCount">{{ present }}</h2>
-    <p>{{ present_change }}% vs last attendance</p>
-</div>
+        <div class="card">
+            <div style="display: flex;">
+                <div class="icon-box icon-marked">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <div style="margin-left: 5px;">
+                    <h3>Present Today</h3>
+                </div>
+            </div>
+            <h2 id="presentCount">{{ present }}</h2>
 
-<div class="card">
-    <div style="display: flex;">
-    <div class="icon-box icon-notmarked">
-        <i class="fa-solid fa-xmark"></i>
-    </div>
-    <div style="margin-left: 5px;">
-    <h3>Absent Today</h3></div>
-    </div>
-    <h2 id="absentCount">{{ absent }}</h2>
-    <p>{{ absent_change }}% vs last attendance</p>
-</div>
+            <p>
+                Attendance Rate: {{ present_percentage }}%
+            </p>
 
-<div class="card">
+            {% if not last_attendance_date %}
+            <p>
+                No previous attendance data
+            </p>
+            {% else %}
+            <p>
+                {% if present_change > 0 %}
+                ↑ {{ present_change }}% higher than Last day
+                {% elif present_change < 0 %} ↓ {{ present_change|cut:"-" }}% lower than Last day {% else %} → No
+                    change from Last day {% endif %} </p>
+                    {% endif %}
+        </div>
+
+        <div class="card">
+            <div style="display: flex;">
+                <div class="icon-box icon-notmarked">
+                    <i class="fa-solid fa-xmark"></i>
+                </div>
+                <div style="margin-left: 5px;">
+                    <h3>Absent Today</h3>
+                </div>
+            </div>
+            <h2 id="absentCount">{{ absent }}</h2>
+
+            <p>
+                Absent Rate: {{ absent_percentage }}%
+            </p>
+
+            {% if not last_attendance_date %}
+            <p>
+                No previous attendance data
+            </p>
+            {% else %}
+            <p>
+                {% if absent_change > 0 %}
+                ↑ {{ absent_change }}% higher than Last day
+                {% elif absent_change < 0 %} ↓ {{ absent_change|cut:"-" }}% lower than Last day {% else %} → No change
+                    from Last day {% endif %} </p>
+                    {% endif %}
+        </div>
+
+        <div class="card">
+
     <h3>Late Today</h3>
+
     <h2 id="lateCount">{{ late }}</h2>
-    <p>{{ late_change }}% vs last attendance</p>
-</div>
+
+    <p>
+        Late Rate: {{ late_percentage }}%
+    </p>
+
+    {% if not last_attendance_date %}
+    <p>
+        No previous attendance data
+    </p>
+    {% else %}
+    <p>
+        {% if late_change > 0 %}
+            ↑ {{ late_change }}% higher than Last day
+        {% elif late_change < 0 %}
+            ↓ {{ late_change|cut:"-" }}% lower than Last day
+        {% else %}
+            → No change from Last day
+        {% endif %}
+    </p>
+    {% endif %}
 
 </div>
+
+    </div>
 
 </div>
 
 <script>
-let timeout = null;
+    let timeout = null;
 
-const searchInput = document.getElementById("searchInput");
+    const searchInput = document.getElementById("searchInput");
 
-searchInput.addEventListener("input", function () {
+    searchInput.addEventListener("input", function () {
 
-    console.log("Typing:", this.value);
+        console.log("Typing:", this.value);
 
-    clearTimeout(timeout);
+        clearTimeout(timeout);
 
-    const query = this.value;
+        const query = this.value;
 
-    timeout = setTimeout(() => {
-        liveSearch(query);
-    }, 300);
-});
-
-
-async function liveSearch(query) {
-
-    const batchCard =
-        document.getElementById("batchDetailCard");
-
-    const batchList =
-        document.getElementById("batchList");
-
-    if (!query.trim()) {
-
-    batchCard.style.display = "none";
-
-    document.getElementById("batchList").innerHTML = "";
-
-    const res = await fetch('/api/dashboard-api/');
-    const data = await res.json();
-
-    document.getElementById("totalCount").innerText = data.total;
-    document.getElementById("presentCount").innerText = data.present;
-    document.getElementById("absentCount").innerText = data.absent;
-    document.getElementById("lateCount").innerText = data.late;
-
-    return;
-}
-    const res = await fetch(
-        `/api/dashboard-api/?search=${encodeURIComponent(query)}`
-    );
-
-    const data = await res.json();
-
-    document.getElementById("totalCount").innerText = data.total;
-    document.getElementById("presentCount").innerText = data.present;
-    document.getElementById("absentCount").innerText = data.absent;
-    document.getElementById("lateCount").innerText = data.late;
+        timeout = setTimeout(() => {
+            liveSearch(query);
+        }, 300);
+    });
 
 
-batchList.innerHTML = "";
+    async function liveSearch(query) {
 
-data.batches.forEach(item => {
+        const batchCard = document.getElementById("batchDetailCard");
+        const batchList = document.getElementById("batchList");
 
-    batchList.innerHTML += `
-        <div class="detail-row">
-            <span class="label">Course :</span>
-            <span>${item.course}</span>
-        </div>
+        if (!query.trim()) {
 
-        <div class="detail-row">
-            <span class="label">Batch :</span>
-            <span>${item.batch}</span>
-        </div>
-        <hr>
-    `;
-});
+            document.getElementById("dashboardTitle").innerText =
+                "Overall Summary";
 
-batchCard.style.display = "block";
-}
+            batchCard.style.display = "none";
+            batchList.innerHTML = "";
+
+            const res = await fetch('/api/dashboard-api/');
+            const data = await res.json();
+
+            document.getElementById("totalCount").innerText = data.total;
+            document.getElementById("presentCount").innerText = data.present;
+            document.getElementById("absentCount").innerText = data.absent;
+            document.getElementById("lateCount").innerText = data.late;
+
+            return;
+        }
+
+        const res = await fetch(
+            `/api/dashboard-api/?search=${encodeURIComponent(query)}`
+        );
+
+        const data = await res.json();
+
+        document.getElementById("dashboardTitle").innerText =
+            "Filtered Results";
+
+        document.getElementById("totalCount").innerText = data.total;
+        document.getElementById("presentCount").innerText = data.present;
+        document.getElementById("absentCount").innerText = data.absent;
+        document.getElementById("lateCount").innerText = data.late;
+
+        batchList.innerHTML = "";
+
+        data.batches.forEach(item => {
+
+            batchList.innerHTML += `
+            <div class="detail-row">
+                <span class="label">Course :</span>
+                <span>${item.course}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label">Batch :</span>
+                <span>${item.batch}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label">Trainer :</span>
+                <span>${item.trainer}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="label">Timing :</span>
+                 <span>${item.session} (${item.timing})</span>
+            </div>
+
+            <hr>
+        `;
+        });
+
+        batchCard.style.display = "block";
+    }
 </script>
 
 {% endblock %}

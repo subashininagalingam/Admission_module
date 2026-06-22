@@ -87,7 +87,7 @@
                 Reset
             </button>
 
-            <button type="submit" class="btn">
+            <button type="button" class="btn">
                 Apply Filter
             </button>
         </div>
@@ -159,7 +159,13 @@
                 <tbody>
 
                     {% for record in records %}
-                    <tr>
+                        <tr class="attendance-row"
+                        data-name="{{ record.enrollment.student.first_name|lower }} {{ record.enrollment.student.last_name|lower }}"
+                        data-id="stu{{ record.enrollment.student.id }}"
+                        data-course="{{ record.enrollment.course.course_name|lower }}"
+                        data-batch="{{ record.batch.id }}"
+                        data-status="{{ record.status|lower }}"
+                        data-date="{{ record.attendance_date|date:'Y-m-d' }}">
 
                         <td>{{ record.attendance_date }}</td>
 
@@ -299,21 +305,26 @@
 <script>
     function validateFormat() {
 
-        const format = document.getElementById("format").value;
-        const error = document.getElementById("error-msg");
+    const format = document.getElementById("format");
+    const error = document.getElementById("error-msg");
 
-        if (!format) {
-            error.innerText = "Please select a format (Excel or PDF)";
-            error.style.color = "red";
-            return false; // stop form submit
-        }
+    if (!format.value) {
 
-        error.innerText = "";
-        return true; // allow submit
+        error.innerText =
+            "Please select a format (Excel or PDF)";
+        error.style.color = "red";
+
+        return false;
     }
 
+    error.innerText = "";
 
-    
+    setTimeout(() => {
+        format.value = "";
+    }, 100);
+
+    return true;
+}
 
 </script>
 
@@ -337,10 +348,12 @@
         document.querySelectorAll(".student-detail-btn").forEach(btn => {
 
             btn.addEventListener("click", function (e) {
+                console.log("CLICK WORKING");
 
                 e.preventDefault();
 
                 let studentId = this.dataset.id;
+                console.log("Student ID =", studentId);
 
                 fetch(`/api/student-attendance-summary/${studentId}/`)
                     .then(res => res.json())
@@ -450,6 +463,7 @@ function applyAvatarColors() {
 document.addEventListener("DOMContentLoaded", function () {
 
     applyAvatarColors();
+    
 
 });
 
@@ -507,82 +521,138 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 <script>
-
-const form = document.getElementById("filterForm");
-const error = document.getElementById("search-error");
-
-form.addEventListener("submit", function(e) {
-
-    const inputs = form.querySelectorAll("input");
-    const selects = form.querySelectorAll("select");
-
-    let hasValue = false;
-
-    // CHECK INPUTS
-    inputs.forEach(input => {
-        if (input.value.trim() !== "") {
-            hasValue = true;
-        }
-    });
-
-    // CHECK SELECTS
-    selects.forEach(select => {
-        if (select.value.trim() !== "") {
-            hasValue = true;
-        }
-    });
-
-    // ALL EMPTY
-    if (!hasValue) {
-
-        e.preventDefault();
-
-        error.innerText = "Enter at least one filter";
-        error.style.color = "red";
-
-    } else {
-
-        error.innerText = "";
-
-    }
-
-});
-
-
-// RESET
+    // RESET
 document.getElementById("resetBtn").addEventListener("click", function () {
 
-    // CLEAR INPUTS
-    form.querySelectorAll("input").forEach(input => {
+    // Clear inputs
+    document.querySelectorAll("#filterForm input").forEach(input => {
         input.value = "";
     });
 
-    // RESET SELECTS
-    form.querySelectorAll("select").forEach(select => {
+    // Reset selects
+    document.querySelectorAll("#filterForm select").forEach(select => {
         select.selectedIndex = 0;
     });
 
-    // CLEAR ERROR
-    error.innerText = "";
+    // Clear error
+    document.getElementById("search-error").innerText = "";
 
-    // REMOVE URL PARAMS
-    window.history.replaceState({}, document.title, window.location.pathname);
+    // Clear hidden download inputs
+    document.querySelectorAll('.download-form input[type="hidden"]')
+        .forEach(input => {
+            input.value = "";
+        });
 
-    fetch(window.location.pathname)
-    .then(response => response.text())
-    .then(data => {
-
-        let parser = new DOMParser();
-        let doc = parser.parseFromString(data, "text/html");
-
-        document.querySelector(".table tbody").innerHTML =
-            doc.querySelector(".table tbody").innerHTML;
-
-        applyAvatarColors(); 
-
-    });
+    // Show all rows again
+    document.querySelectorAll(".attendance-row")
+        .forEach(row => {
+            row.style.display = "";
+        });
 
 });
+</script>
+
+<script>
+
+function applyFilters() {
+
+    const search =
+        document.querySelector(
+            'input[name="search"]'
+        ).value.toLowerCase();
+
+    const fromDate =
+        document.querySelector(
+            'input[name="from_date"]'
+        ).value;
+
+    const toDate =
+        document.querySelector(
+            'input[name="to_date"]'
+        ).value;
+
+    const status =
+        document.querySelector(
+            'select[name="status"]'
+        ).value.toLowerCase();
+
+    const batch =
+        document.querySelector(
+            'select[name="batch"]'
+        ).value;
+
+    const course =
+        document.querySelector(
+            'select[name="course_name"]'
+        ).value.toLowerCase();
+
+    document
+        .querySelectorAll(".attendance-row")
+        .forEach(row => {
+
+            const rowDate = row.dataset.date;
+
+            const show =
+
+                (search === "" ||
+                 row.dataset.name.includes(search) ||
+                 row.dataset.id.includes(search))
+
+                &&
+
+                (status === "" ||
+                 row.dataset.status === status)
+
+                &&
+
+                (batch === "" ||
+                 row.dataset.batch === batch)
+
+                &&
+
+                (course === "" ||
+                 row.dataset.course === course)
+
+                &&
+
+                (fromDate === "" ||
+                 rowDate >= fromDate)
+
+                &&
+
+                (toDate === "" ||
+                 rowDate <= toDate);
+
+            row.style.display =
+                show ? "" : "none";
+
+        });
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        document
+        .querySelectorAll(
+            '#filterForm input, #filterForm select'
+        )
+        .forEach(el => {
+
+            el.addEventListener(
+                "keyup",
+                applyFilters
+            );
+
+            el.addEventListener(
+                "change",
+                applyFilters
+            );
+
+        });
+
+    }
+);
 
 </script>
 

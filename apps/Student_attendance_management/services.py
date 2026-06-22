@@ -104,8 +104,11 @@ def get_absent_tracker_data():
             "id":
             enrollment.id,
             
-            "notification_sent":
-            False,
+            #"notification_sent":
+            #False,
+            "notification_sent": tracker.notification_sent,
+
+            "notification_status": tracker.notification_status,
 
             "student":
             enrollment.student,
@@ -147,20 +150,19 @@ def get_low_attendance_data():
 
     students_data = []
 
+    total_working_days = (
+        Attendance.objects
+        .values('attendance_date')
+        .distinct()
+        .count()
+    )
+
     enrollments = Enrollment.objects.select_related(
         'admission__student',
         'batch'
     )
 
     for enrollment in enrollments:
-
-        total_working_days = (
-            Attendance.objects
-            .filter(batch=enrollment.batch)
-            .values('attendance_date')
-            .distinct()
-            .count()
-        )
 
         attendance_records = Attendance.objects.filter(
             enrollment=enrollment
@@ -200,10 +202,20 @@ def get_low_attendance_data():
             attendance_percentage = 100
 
         # Alert Logic
-        if total_absences >= 3:
+        if (
+            attendance_percentage < 60
+            or consecutive_absences >= 3
+            or total_absences >= 5
+        ):
+
             alert_level = "Critical"
 
-        elif total_absences <3 and total_absences >1:
+        elif (
+            attendance_percentage < 75
+            or consecutive_absences == 2
+            or total_absences >= 3
+        ):
+
             alert_level = "Warning"
 
         else:

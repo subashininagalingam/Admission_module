@@ -117,6 +117,40 @@
                 Apply Filter
             </button>
 
+            <!-- filter-container close -->
+            <div class="filter-message">
+
+                {% if attendance_status == "not_started" %}
+
+                <div class="alert alert-danger attendance-toast">
+                    Today's attendance has not been started yet.
+                </div>
+
+                {% elif attendance_status == "in_progress" %}
+
+                <div class="alert alert-warning attendance-toast">
+                    Today's attendance is in progress.
+                    {{ today_marked_count }} of {{ total_students }} students have been marked.
+                    {{ pending_count }} students are pending.
+                </div>
+
+                {% else %}
+
+                <div class="alert alert-success attendance-toast">
+                    Today's attendance has been completed successfully.
+                    Attendance records updated for all {{ total_students }} students.
+                </div>
+
+                {% endif %}
+            </div>
+        </div>
+
+
+
+        <div id="noResultsMessage" style="display:none;text-align:center;padding:20px;font-weight:bold;">
+
+            No records found
+
         </div>
 
 
@@ -181,42 +215,6 @@
             </div>
 
         </div>
-        {% if attendance_status == "not_started" %}
-
-        <div class="alert alert-danger">
-
-            Today's attendance has not been started yet.
-
-        </div>
-
-        {% elif attendance_status == "in_progress" %}
-
-        <div class="alert alert-warning">
-
-            Today's attendance is in progress.
-
-            {{ today_marked_count }} of
-            {{ total_students }}
-            students have been marked.
-
-            {{ pending_count }}
-            students are pending.
-
-        </div>
-
-        {% else %}
-
-        <div class="alert alert-success">
-
-            Today's attendance has been completed successfully.
-
-            Attendance records updated for all
-            {{ total_students }}
-            students.
-
-        </div>
-
-        {% endif %}
 
 
 
@@ -277,8 +275,7 @@
                         {% for student in report_students %}
 
                         <tr class="report-row" data-name="{{ student.student.first_name|lower }}"
-                            data-course="{{ student.course.course_name|lower }}"
-                            data-batch="{{ student.batch.id }}"
+                            data-course="{{ student.course.course_name|lower }}" data-batch="{{ student.batch.id }}"
                             data-attendance="{{ student.attendance_rate }}" data-status="{{ student.status|lower }}">
 
 
@@ -369,6 +366,14 @@
                                 {% endif %}
                             </td>
 
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+                            <td colspan="9" style="text-align:center;">
+                                No records found
+                            </td>
                         </tr>
 
                         {% endfor %}
@@ -538,28 +543,28 @@
                 },
 
                 options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
 
-                        interaction: {
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        },
+                        tooltip: {
                             mode: 'index',
                             intersect: false
-                        },
+                        }
+                    },
 
-                        plugins: {
-                            legend: {
-                                position: 'top'
-                            },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false
-                            }
-                        },
-
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
 
                     }
 
@@ -573,20 +578,43 @@
         );
 
         const colorPalette = [
-    '#22c55e',
-    '#2563eb',
-    '#f59e0b',
-    '#7c3aed',
-    '#ef4444',
-    '#06b6d4',
-    '#ec4899',
-    '#84cc16',
-    '#f97316'
-];
+            '#22c55e',
+            '#2563eb',
+            '#f59e0b',
+            '#7c3aed',
+            '#ef4444',
+            '#06b6d4',
+            '#ec4899',
+            '#84cc16',
+            '#f97316'
+        ];
 
-const chartColors = batchLabels.map(
-    (_, index) => colorPalette[index % colorPalette.length]
-);
+        const chartColors = batchLabels.map(label => {
+
+            if (label.includes("Python Full Stack"))
+                return "#22c55e";
+
+            if (label.includes("Java Full Stack"))
+                return "#2563eb";
+
+            if (label.includes("UI/UX"))
+                return "#f59e0b";
+
+            if (label.includes("Digital Marketing"))
+                return "#7c3aed";
+
+            if (label.includes("Data Science"))
+                return "#ef4444";
+
+            if (label.includes("Python -"))
+                return "#06b6d4";
+
+            if (label.includes("Java -"))
+                return "#ec4899";
+
+            return "#22c55e";
+
+        });
 
         new Chart(
             batchChart,
@@ -624,6 +652,7 @@ const chartColors = batchLabels.map(
                         },
 
                         tooltip: {
+                            displayColors: false,
 
                             callbacks: {
 
@@ -642,16 +671,16 @@ const chartColors = batchLabels.map(
 
                                     return [
 
-                                        "Present : " +
+                                        "🟩 Present : " +
                                         presentList[index],
 
-                                        "Absent : " +
+                                        "🟥 Absent : " +
                                         absentList[index],
 
-                                        "Late : " +
+                                        "🟨 Late : " +
                                         lateList[index],
 
-                                        "Attendance : " +
+                                        "📊 Attendance : " +
                                         (percentageList[index] || 0) + "%"
 
                                     ];
@@ -800,8 +829,8 @@ const chartColors = batchLabels.map(
                 if (attendance !== "") {
 
                     attendanceMatch =
-                        studentAttendance >=
-                        parseFloat(attendance);
+                        Math.floor(studentAttendance) ===
+                        parseInt(attendance);
 
                 }
 
@@ -811,7 +840,7 @@ const chartColors = batchLabels.map(
                         studentName.startsWith(name))
 
                     &&
-                    
+
 
                     (course === "" ||
                         studentCourse === course)
@@ -840,6 +869,19 @@ const chartColors = batchLabels.map(
                 }
 
             });
+            if (visibleCount === 0) {
+
+                document.getElementById(
+                    "noResultsMessage"
+                ).style.display = "block";
+
+            } else {
+
+                document.getElementById(
+                    "noResultsMessage"
+                ).style.display = "none";
+
+            }
 
             // document.getElementById("resultsCount").textContent = `Showing ${visibleCount} of ${totalCount} Students`;
 

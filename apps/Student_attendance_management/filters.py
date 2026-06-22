@@ -62,8 +62,8 @@ class AttendanceFilter(django_filters.FilterSet):
 
     def custom_search(self, queryset, name, value):
         query = (
-        Q(enrollment__admission__student__first_name__icontains=value) |
-        Q(enrollment__admission__student__last_name__icontains=value)
+        Q(enrollment__admission__student__first_name__istartswith=value) |
+        Q(enrollment__admission__student__last_name__istartswith=value)
     )
 
         student_id = value.upper().replace("STU", "")

@@ -580,3 +580,15 @@ canvas{
     }
 
 }
+.filter-message{
+    grid-column: 3 / 6;
+}
+
+.attendance-toast{
+    width: 100%;
+    margin: 0;
+    padding: 10px;
+    text-align: center;
+    border-radius: 8px;
+    font-size: 14px;
+}

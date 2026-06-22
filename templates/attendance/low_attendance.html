@@ -7,302 +7,317 @@
 <link rel="stylesheet" href="{% static 'attendance/css/low_attendance.css' %}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-<div class="main-content">
+<div class="low-attendance-page">
 
-    <div class="low-attendance-page">
-
-        <!-- TOP HEADER -->
-
-        <div class="topbar-section">
-
-            <h2 class="page-title">
-
-                Low Attendance Alerts
-
-            </h2>
-
+    <!-- TOP HEADER -->
+    <div class="topbar-section">
+        <div>
+            <h2 class="page-title">Low Attendance Alerts</h2>
+            <p class="page-subtitle">Monitor students with low attendance and take necessary actions</p>
         </div>
-        <div class="filter-container">
+        <div class="topbar-right">
+            <span class="last-updated">
+                <i class="bi bi-clock-history"></i>
+                Last updated: <span id="lastUpdatedTime"></span>
+            </span>
+            <button type="button" class="refresh-btn" onclick="location.reload()" title="Refresh">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+    </div>
 
-            <input type="text" id="studentNameFilter" placeholder="Student Name" class="filter-input">
+    <!-- FILTERS -->
+    <form class="filter-card" method="get" id="filterForm">
 
-            <select id="courseFilter" class="filter-input filter-select">
+        <div class="filter-grid">
+
+            <input type="text" name="name" id="studentNameFilter" placeholder="Student Name"
+                   class="filter-input" value="{{ filters.name }}">
+
+            <select name="course" id="courseFilter" class="filter-select">
                 <option value="">Courses</option>
-
                 {% for course in courses %}
-                <option value="{{ course.course_name|lower }}">
+                <option value="{{ course.course_name }}" {% if filters.course == course.course_name %}selected{% endif %}>
                     {{ course.course_name }}
                 </option>
                 {% endfor %}
             </select>
 
-            <select id="batchFilter" class="filter-input filter-select">
+            <select name="batch" id="batchFilter" class="filter-select">
                 <option value="">Batches</option>
-
                 {% for batch in batches %}
-                <option value="{{ batch.id }}">
-                    {{ batch.batch_name }}
-                    ({{ batch.course.course_name }})
+                <option value="{{ batch.id }}" {% if filters.batch == batch.id|stringformat:"s" %}selected{% endif %}>
+                    {{ batch.batch_name }} ({{ batch.course.course_name }})
                 </option>
                 {% endfor %}
             </select>
 
-            <input type="text" id="percentageFilter" placeholder="Attendance %" class="filter-input">
+            <input type="text" name="attendance" id="percentageFilter" placeholder="Attendance %"
+                   class="filter-input" value="{{ filters.attendance }}">
 
-            <button id="clearFilters" class="clear-btn">
+        </div>
 
+        <div class="filter-actions">
+
+            <button type="button" id="clearFilters" class="clear-btn">
                 <i class="bi bi-x-circle"></i>
-
                 Clear
-
             </button>
 
-            <button id="showAllBtn" class="clear-btn">
-
+            <button type="submit" class="search-all-btn">
+                <i class="bi bi-search"></i>
                 Search All
-
             </button>
 
         </div>
 
-        <!-- ALERT SECTION -->
+    </form>
 
-        <div class="row g-4">
+    <!-- STATS -->
+    <div class="stats-row">
 
-            <!-- CRITICAL ALERTS -->
+        <div class="stat-card">
+            <div class="stat-icon icon-critical"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div>
+                <p class="stat-label">Critical Alerts</p>
+                <p class="stat-value critical">{{ critical_students|length }}</p>
+                <p class="stat-caption">Below 60%</p>
+            </div>
+        </div>
 
-            <div class="col-lg-6">
+        <div class="stat-card">
+            <div class="stat-icon icon-warning"><i class="bi bi-exclamation-circle-fill"></i></div>
+            <div>
+                <p class="stat-label">Warning Alerts</p>
+                <p class="stat-value warning">{{ warning_students|length }}</p>
+                <p class="stat-caption">60% - 75%</p>
+            </div>
+        </div>
 
-                <div class="attendance-card critical-card">
+        <div class="stat-card">
+            <div class="stat-icon icon-blue"><i class="bi bi-people-fill"></i></div>
+            <div>
+                <p class="stat-label">Total Students</p>
+                <p class="stat-value blue">{{ total_students }}</p>
+                <p class="stat-caption">Low Attendance</p>
+            </div>
+        </div>
 
-                    <div class="attendance-card-header">
+        
 
-                        <div class="header-left critical-text">
+    </div>
 
-                            <i class="bi bi-exclamation-triangle-fill"></i>
+    <!-- CRITICAL ALERTS -->
+    <div class="alert-section critical-section" id="criticalSection">
 
-                            <span>
+        <div class="alert-section-header">
 
-                                Critical Alerts
+            <div class="alert-title-group critical-text">
+                <h3><i class="bi bi-exclamation-triangle-fill"></i> Critical Alerts ({{ critical_students|length }})</h3>
+                <span class="range-pill critical">Below 60%</span>
+            </div>
 
-                            </span>
+            <div class="alert-section-actions">
 
-                        </div>
+                <button type="button" class="action-pill-btn btn-critical"
+                        onclick="sendSectionNotification('criticalSection', 'sms')">
+                    <i class="bi bi-chat-left-text-fill"></i> Send SMS
+                </button>
 
-                        <div class="header-right critical-percent-label">
+                <button type="button" class="action-pill-btn btn-critical"
+                        onclick="sendSectionNotification('criticalSection', 'email')">
+                    <i class="bi bi-envelope-fill"></i> Send Email
+                </button>
 
-                            Below 60%
+                <button type="button" class="export-btn" onclick="toggleExportMenu(this)">
+                    <i class="bi bi-download"></i> Export <i class="bi bi-caret-down-fill"></i>
+                </button>
 
-                        </div>
-
-                    </div>
-
-                    {% for student in critical_students %}
-
-                    <div
-                        class="student-warning-card critical-warning-card low-card"
-                        data-name="{{ student.student.first_name|lower }} {{ student.student.last_name|lower }}"
-                        data-course="{{ student.course.course_name|lower }}"
-                        data-batch="{{ student.batch.id }}"
-                        data-percentage="{{ student.attendance_percentage }}">
-
-                        <div class="student-left-section">
-
-                            <div class="warning-icon critical-icon">
-
-                                <i class="bi bi-cone-striped"></i>
-
-                            </div>
-
-                            <div>
-
-                                <h5>
-
-                                    {{ student.student.first_name }}
-                                    {{ student.student.last_name }}
-                                </h5>
-
-                                <p>
-                                    {{ student.course.course_name }}
-                                    ·
-                                    {{ student.batch.batch_name }}
-                                    · Total Absences:
-                                    {{ student.total_absences }}
-                                </p>
-
-                            </div>
-
-                        </div>
-
-                        <div class="student-right-section">
-
-                            <h3 class="critical-score">
-
-                                {{ student.attendance_percentage }}%
-
-                            </h3>
-
-                            <div class="action-buttons">
-
-                                <a href="{% url 'send_sms_notification' student.id %}"
-                                    class="mail-btn critical-mail-btn">
-
-                                    <i class="bi bi-chat-left-text-fill"></i>
-
-                                </a>
-
-                                <a href="{% url 'send_low_attendance_email' student.id %}"
-                                    class="mail-btn critical-mail-btn">
-
-                                    <i class="bi bi-envelope-fill"></i>
-
-                                </a>
-
-                            </div>
-
-                        </div>
-
+                <div class="export-menu">
+                    <a href="{% url 'low_attendance_export' %}?type=critical"
+                    class="dropdown-item">
+                    <i class="bi bi-file-earmark-excel"></i>
+                    Export Excel
+                    </a>
                 </div>
-
-
-                {% empty %}
-
-                <div class="text-center py-4">
-
-                    <p>No Critical Alerts Found</p>
-
-                </div>
-
-                {% endfor %}
 
             </div>
 
         </div>
 
-        <!-- WARNING ALERTS -->
+        <div class="select-all-row critical">
+            <input type="checkbox" class="select-all-checkbox" data-target="criticalSection">
+            <span>Select All ({{ critical_students|length }} students)</span>
+        </div>
 
-        <div class="col-lg-6">
+        <div class="table-scroll">
+            <table class="alert-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Batch</th>
+                        <th>Attendance</th>
+                        <th>Consecutive Absences</th>
+                        <th>Total Absences</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in critical_students %}
+                    <tr class="data-row">
+                        <td><input type="checkbox" class="row-checkbox" data-id="{{ student.id }}"></td>
+                        <td>
+                            <div class="student-cell">
+                                <div class="avatar-circle critical">{{ student.student.first_name|first|upper }}{{ student.student.last_name|first|upper }}</div>
+                                <div>
+                                    <div class="student-name">{{ student.student.first_name }} {{ student.student.last_name }}</div>
+                                    <div class="student-id">STU{{ student.student.id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ student.course.course_name }}</td>
+                        <td>{{ student.batch.batch_name }}</td>
+                        <td>
+                            <div class="attendance-cell">
+                                <span class="attendance-pct critical">{{ student.attendance_percentage }}%</span>
+                                <span class="level-badge critical">Critical</span>
+                            </div>
+                        </td>
+                        <td>{{ student.consecutive_absences }}</td>
+                        <td>{{ student.total_absences }}</td>
+                        <td>
+                            <div class="row-actions">
+                                <a href="{% url 'send_sms_notification' student.id %}" class="icon-btn critical ajax-action-btn" data-type="sms">
+                                    <i class="bi bi-chat-left-text-fill"></i>
+                                </a>
+                                <a href="{% url 'send_low_attendance_email' student.id %}" class="icon-btn critical ajax-action-btn" data-type="email">
+                                    <i class="bi bi-envelope-fill"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row"><td colspan="8">No Critical Alerts Found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-            <div class="attendance-card warning-card">
-
-                <div class="attendance-card-header">
-
-                    <div class="header-left warning-text">
-
-                        <i class="bi bi-exclamation-circle-fill"></i>
-
-                        <span>
-
-                            Warning Alerts
-
-                        </span>
-
-                    </div>
-
-                    <div class="header-right warning-percent-label">
-
-                        60% - 75%
-
-                    </div>
-
-                </div>
-
-                {% for student in warning_students %}
-
-                <div
-                    class="student-warning-card warning-warning-card low-card"
-                    data-name="{{ student.student.first_name|lower }} {{ student.student.last_name|lower }}"
-                    data-course="{{ student.course.course_name|lower }}"
-                   data-batch="{{ student.batch.id }}"
-                    data-percentage="{{ student.attendance_percentage }}">
-                    <div class="student-left-section">
-
-                        <div class="warning-icon warning-icon-bg">
-
-                            <i class="bi bi-exclamation-triangle-fill"></i>
-
-                        </div>
-
-                        <div>
-
-                            <h5>
-
-                                {{ student.student.first_name }}
-                                {{ student.student.last_name }}
-
-                            </h5>
-
-                            <p>
-
-                                {{ student.course.course_name }}
-                                ·
-                                {{ student.batch.batch_name }}
-                                · Total Absences:
-                                {{ student.total_absences }}
-
-
-
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                    <div class="student-right-section">
-
-                        <h3 class="warning-score">
-
-                            {{ student.attendance_percentage }}%
-
-                        </h3>
-
-                        <div class="action-buttons">
-
-                            <a href="{% url 'send_sms_notification' student.id %}" class="mail-btn warning-mail-btn">
-
-                                <i class="bi bi-chat-left-text-fill"></i>
-
-                            </a>
-
-                            <a href="{% url 'send_low_attendance_email' student.id %}"
-                                class="mail-btn warning-mail-btn">
-
-                                <i class="bi bi-envelope-fill"></i>
-
-                            </a>
-
-                        </div>
-
-                    </div>
-
-            </div>
-
-
-            {% empty %}
-
-            <div class="text-center py-4">
-
-                <p>No Warning Alerts Found</p>
-
-            </div>
-
-            {% endfor %}
-
+        <div class="table-footer">
+            <span class="footer-count"></span>
+            <div class="pager"></div>
         </div>
 
     </div>
 
-</div>
-<div id="successMessage" class="alert alert-success d-none" style="
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-        min-width: 320px;
-    ">
+    <!-- WARNING ALERTS -->
+    <div class="alert-section warning-section" id="warningSection">
+
+        <div class="alert-section-header">
+
+            <div class="alert-title-group warning-text">
+                <h3><i class="bi bi-exclamation-circle-fill"></i> Warning Alerts ({{ warning_students|length }})</h3>
+                <span class="range-pill warning">60% - 75%</span>
+            </div>
+
+            <div class="alert-section-actions">
+
+                <button type="button" class="action-pill-btn btn-warning"
+                        onclick="sendSectionNotification('warningSection', 'sms')">
+                    <i class="bi bi-chat-left-text-fill"></i> Send SMS
+                </button>
+
+                <button type="button" class="action-pill-btn btn-warning"
+                        onclick="sendSectionNotification('warningSection', 'email')">
+                    <i class="bi bi-envelope-fill"></i> Send Email
+                </button>
+
+                <button type="button" class="export-btn" onclick="toggleExportMenu(this)">
+                    <i class="bi bi-download"></i> Export <i class="bi bi-caret-down-fill"></i>
+                </button>
+
+                <div class="export-menu">
+    <a href="{% url 'low_attendance_export' %}?type=warning"
+       class="dropdown-item">
+        <i class="bi bi-file-earmark-excel"></i>
+        Export Excel
+    </a>
 </div>
 
-<!-- BULK NOTIFICATION -->
+            </div>
+
+        </div>
+
+        <div class="select-all-row warning">
+            <input type="checkbox" class="select-all-checkbox" data-target="warningSection">
+            <span>Select All ({{ warning_students|length }} students)</span>
+        </div>
+
+        <div class="table-scroll">
+            <table class="alert-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Batch</th>
+                        <th>Attendance</th>
+                        <th>Consecutive Absences</th>
+                        <th>Total Absences</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in warning_students %}
+                    <tr class="data-row">
+                        <td><input type="checkbox" class="row-checkbox" data-id="{{ student.id }}"></td>
+                        <td>
+                            <div class="student-cell">
+                                <div class="avatar-circle warning">{{ student.student.first_name|first|upper }}{{ student.student.last_name|first|upper }}</div>
+                                <div>
+                                    <div class="student-name">{{ student.student.first_name }} {{ student.student.last_name }}</div>
+                                    <div class="student-id">STU{{ student.student.id}}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ student.course.course_name }}</td>
+                        <td>{{ student.batch.batch_name }}</td>
+                        <td>
+                            <div class="attendance-cell">
+                                <span class="attendance-pct warning">{{ student.attendance_percentage }}%</span>
+                                <span class="level-badge warning">Warning</span>
+                            </div>
+                        </td>
+                        <td>{{ student.consecutive_absences }}</td>
+                        <td>{{ student.total_absences }}</td>
+                        <td>
+                            <div class="row-actions">
+                                <a href="{% url 'send_sms_notification' student.id %}" class="icon-btn warning ajax-action-btn" data-type="sms">
+                                    <i class="bi bi-chat-left-text-fill"></i>
+                                </a>
+                                <a href="{% url 'send_low_attendance_email' student.id %}" class="icon-btn warning ajax-action-btn" data-type="email">
+                                    <i class="bi bi-envelope-fill"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row"><td colspan="8">No Warning Alerts Found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <span class="footer-count"></span>
+            <div class="pager"></div>
+        </div>
+
+    </div>
+
+    <!-- BULK NOTIFICATION -->
 
 <div class="bulk-notification-card">
 
@@ -357,33 +372,49 @@
 
 </div>
 
-</div>
 
+
+    <!-- NOTE -->
+    <div class="note-box">
+        <i class="bi bi-info-circle-fill"></i>
+        <div>
+            <strong>Note</strong>
+            <p>Students in Critical Alerts have attendance below 60% and require immediate attention.</p>
+            <p>Students in Warning Alerts have attendance between 60% and 75% and should be monitored closely.</p>
+        </div>
+    </div>
+
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 
+    const csrftoken = "{{ csrf_token }}";
+
+    // ---------- helpers ----------
+
     function showPopup(message, isError = false) {
-
         Swal.fire({
-
             icon: isError ? "error" : "success",
-
             title: isError ? "Failed" : "Success",
-
             text: message,
-
             timer: 2000,
-
             showConfirmButton: false
-
         });
-
     }
 
+    function showLoading(title) {
+        Swal.fire({
+            icon: "info",
+            title: title,
+            text: "Please wait...",
+            allowOutsideClick: false,
+            showConfirmButton: false
+        });
+    }
 
-    function sendEmailAll() {
+     function sendEmailAll() {
 
         // let msg = document.getElementById("successMessage");
 
@@ -618,176 +649,206 @@
         });
 
     });
-    //filter 
-    function applyFilters() {
 
-        const name =
-            document.getElementById(
-                "studentNameFilter"
-            ).value.toLowerCase().trim();
-        const course =
-            document.getElementById(
-                "courseFilter"
-            ).value.toLowerCase().trim();
+    // ---------- last updated time ----------
 
-        const batch =
-            document.getElementById(
-                "batchFilter"
-            ).value.toLowerCase().trim();
+    document.getElementById("lastUpdatedTime").textContent =
+        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-        const percentageValue =
-            document.getElementById(
-                "percentageFilter"
-            ).value.trim();
+    // ---------- per-row SMS / Email buttons ----------
 
-        document.querySelectorAll(
-            ".low-card"
-        ).forEach(card => {
+    document.querySelectorAll(".ajax-action-btn").forEach(function (button) {
 
-            const attendance =
-                parseFloat(
-                    card.dataset.percentage
-                );
+        button.addEventListener("click", function (e) {
 
-            const percentageMatch =
+            e.preventDefault();
 
-    percentageValue === ""
+            showLoading(this.dataset.type === "sms" ? "Sending SMS" : "Sending Email");
 
-    ||
-
-    attendance.toFixed(1) ===
-    parseFloat(percentageValue).toFixed(1);
-
-            const nameMatch =
-
-                name === ""
-
-                ||
-
-                card.dataset.name
-                    .toLowerCase()
-                    .startsWith(name);
-
-            const courseMatch =
-
-                course === ""
-
-                ||
-
-                card.dataset.course
-                    .toLowerCase() === course;
-
-            const batchMatch =
-
-                batch === ""
-
-                ||
-
-                
-                    card.dataset.batch == batch;
-
-            card.style.display =
-
-                (nameMatch &&
-                    courseMatch &&
-                    batchMatch &&
-                    percentageMatch)
-
-                    ? "flex"
-                    : "none";
+            fetch(this.href)
+                .then(response => response.json())
+                .then(data => {
+                    Swal.close();
+                    showPopup(data.message);
+                })
+                .catch(() => {
+                    Swal.close();
+                    showPopup("❌ Notification Sending Failed", true);
+                });
 
         });
 
+    });
+
+    // ---------- select all (per section) ----------
+
+    document.querySelectorAll(".select-all-checkbox").forEach(function (checkbox) {
+
+        checkbox.addEventListener("change", function () {
+
+            const section = document.getElementById(this.dataset.target);
+
+            section.querySelectorAll(".row-checkbox").forEach(function (rowCheckbox) {
+                rowCheckbox.checked = checkbox.checked;
+            });
+
+        });
+
+    });
+
+    // ---------- bulk send to selected rows in a section ----------
+
+    function sendSectionNotification(sectionId, type) {
+
+        const section = document.getElementById(sectionId);
+
+        const ids = Array.from(
+            section.querySelectorAll(".row-checkbox:checked")
+        ).map(cb => parseInt(cb.dataset.id, 10));
+
+        if (ids.length === 0) {
+            showPopup("Please select at least one student", true);
+            return;
+        }
+
+        showLoading(type === "sms" ? "Sending SMS" : "Sending Emails");
+
+        fetch("/api/send-bulk-notification/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken
+            },
+            body: JSON.stringify({ type: type, enrollment_ids: ids })
+        })
+            .then(response => response.json())
+            .then(data => {
+
+    Swal.close();
+
+    // Clear selected checkboxes
+    section.querySelectorAll(".row-checkbox:checked").forEach(cb => {
+        cb.checked = false;
+    });
+
+    // Clear Select All checkbox
+    const selectAll = section.querySelector(".select-all-checkbox");
+    if (selectAll) {
+        selectAll.checked = false;
     }
 
-    /* Select all btn */
-    document.getElementById(
-        "showAllBtn"
-    ).addEventListener(
-        "click",
-        function () {
+    showPopup(data.message);
 
-            document.querySelectorAll(
-                ".filter-input"
-            ).forEach(input => {
+})
 
-                input.value = "";
-
+            .catch(() => {
+                Swal.close();
+                showPopup("❌ Notification Sending Failed", true);
             });
 
-            document.querySelectorAll(
-                ".filter-select"
-            ).forEach(select => {
+    }
 
-                select.value = "";
+    // ---------- export dropdown ----------
 
+    function toggleExportMenu(button) {
+
+        const menu = button.nextElementSibling;
+
+        document.querySelectorAll(".export-menu").forEach(function (otherMenu) {
+            if (otherMenu !== menu) otherMenu.classList.remove("open");
+        });
+
+        menu.classList.toggle("open");
+
+    }
+
+    document.addEventListener("click", function (e) {
+        if (!e.target.closest(".alert-section-actions")) {
+            document.querySelectorAll(".export-menu").forEach(m => m.classList.remove("open"));
+        }
+    });
+
+    // ---------- pagination (per section) ----------
+
+    const PAGE_SIZE = 3;
+
+    function setupPagination(sectionId, colorClass) {
+
+        const section = document.getElementById(sectionId);
+        const rows = Array.from(section.querySelectorAll("tbody tr.data-row"));
+        const footerCount = section.querySelector(".footer-count");
+        const pagerEl = section.querySelector(".pager");
+
+        const total = rows.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        let currentPage = 1;
+
+        function renderPage() {
+
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
+
+            rows.forEach(function (row, index) {
+                row.style.display = (index >= start && index < end) ? "" : "none";
             });
 
-            applyFilters();
+            if (total === 0) {
+                footerCount.textContent = "Showing 0 of 0 students";
+            } else {
+                footerCount.textContent =
+                    `Showing ${start + 1} to ${Math.min(end, total)} of ${total} students`;
+            }
+
+            renderPager();
 
         }
-    );
 
-    /* EVENTS */
+        function renderPager() {
 
-    document.getElementById(
-        "studentNameFilter"
-    ).addEventListener(
-        "keyup",
-        applyFilters
-    );
-    document.getElementById(
-        "courseFilter"
-    ).addEventListener(
-        //"keyup",
-        "change",
-        applyFilters
-    );
+            pagerEl.innerHTML = "";
 
-    document.getElementById(
-        "batchFilter"
-    ).addEventListener(
-        //"keyup",
-        "change",
-        applyFilters
-    );
+            const prevBtn = document.createElement("button");
+            prevBtn.innerHTML = '<i class="bi bi-chevron-left"></i>';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.addEventListener("click", function () {
+                if (currentPage > 1) { currentPage--; renderPage(); }
+            });
+            pagerEl.appendChild(prevBtn);
 
-    document.getElementById(
-        "percentageFilter"
-    ).addEventListener(
-        "keyup",
-        applyFilters
-    );
+            for (let page = 1; page <= totalPages; page++) {
+                const pageBtn = document.createElement("button");
+                pageBtn.textContent = page;
+                if (page === currentPage) pageBtn.classList.add("active", colorClass);
+                pageBtn.addEventListener("click", function () {
+                    currentPage = page;
+                    renderPage();
+                });
+                pagerEl.appendChild(pageBtn);
+            }
 
-    /* CLEAR */
-
-    document.getElementById(
-        "clearFilters"
-    ).addEventListener(
-        "click",
-        function () {
-
-            document.getElementById(
-                "studentNameFilter"
-            ).value = "";
-
-            document.getElementById(
-                "courseFilter"
-            ).value = "";
-
-            document.getElementById(
-                "batchFilter"
-            ).value = "";
-
-            document.getElementById(
-                "percentageFilter"
-            ).value = "";
-
-            applyFilters();
+            const nextBtn = document.createElement("button");
+            nextBtn.innerHTML = '<i class="bi bi-chevron-right"></i>';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.addEventListener("click", function () {
+                if (currentPage < totalPages) { currentPage++; renderPage(); }
+            });
+            pagerEl.appendChild(nextBtn);
 
         }
-    );
+
+        renderPage();
+
+    }
+
+    setupPagination("criticalSection", "critical");
+    setupPagination("warningSection", "warning");
+
+    // ---------- filters ----------
+
+    document.getElementById("clearFilters").addEventListener("click", function () {
+        window.location.href = window.location.pathname;
+    });
+
 </script>
 
-</div>
 {% endblock %}

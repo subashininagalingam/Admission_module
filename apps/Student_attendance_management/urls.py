@@ -56,6 +56,12 @@ urlpatterns = [
     views.absent_tracker,
     name='absent_tracker'
 ),
+
+path(
+    'mark-notification/<int:enrollment_id>/',
+    views.mark_notification_sent,
+    name='mark_notification_sent'
+),
     path(
     'get-admin-notes/<int:tracker_id>/',
     views.get_admin_notes,
@@ -70,6 +76,12 @@ urlpatterns = [
     'low-attendance-alerts/',
     views.low_attendance_alerts,
     name='low_attendance_alerts'
+),
+
+path(
+    'low-attendance/export/',
+    views.low_attendance_export,
+    name='low_attendance_export'
 ),
     path(
     'send-sms-notification/<int:enrollment_id>/',
@@ -93,6 +105,12 @@ path(
     'send-sms-all/',
     views.send_sms_all,
     name='send_sms_all'
+),
+
+path(
+    'send-bulk-notification/',
+    views.send_bulk_notification,
+    name='send_bulk_notification'
 ),
 
 path(
@@ -138,3 +156,4 @@ path(
     ),
 
 ]
+

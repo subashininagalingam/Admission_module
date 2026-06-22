@@ -4,6 +4,7 @@ from multiprocessing import context
 from urllib import request, response
 from apps.Student_attendance_management.forms import BatchForm
 
+
 from rest_framework import viewsets
 from django.shortcuts import render
 from apps.admissions.models import Enrollment
@@ -261,7 +262,7 @@ def dashboard_api(request):
     if search:
         batches = batches.filter(
             Q(batch_name__icontains=search) |
-            Q(course__course_name__icontains=search) |
+            Q(course__course_name__istartswith=search) |
             Q(trainer__trainer_name__icontains=search) |
             Q(timing__icontains=search)
         )
@@ -282,6 +283,9 @@ def dashboard_api(request):
             batch_details.append({
             "course": batch.course.course_name,
             "batch": batch.batch_name,
+            "trainer": batch.trainer.trainer_name if batch.trainer else "Not Assigned",
+            "timing": f"{batch.start_time.strftime('%I:%M %p')} - {batch.end_time.strftime('%I:%M %p')}",
+            "session": batch.timing,
         })
 
     return JsonResponse({
@@ -379,24 +383,74 @@ def dashboard(request):
         last_late = last_qs.filter(status="Late").count()
     percentage = round((present / total) * 100, 2) if total else 0
 
-    present_change = 0
-    absent_change = 0
-    late_change = 0
+    #present_change = 0
+    #absent_change = 0
+    #late_change = 0
+    
+    present_percentage = round((present / total) * 100, 2) if total else 0
+    absent_percentage = round((absent / total) * 100, 2) if total else 0
+    late_percentage = round((late / total) * 100, 2) if total else 0
+    
+    last_total = last_present + last_absent + last_late
 
-    if last_present:
-        present_change = round(
-        ((present - last_present) / last_present) * 100, 2
+    last_present_percentage = round(
+        (last_present / last_total) * 100, 2
+    ) if last_total else 0
+
+    last_absent_percentage = round(
+        (last_absent / last_total) * 100, 2
+    ) if last_total else 0
+
+    last_late_percentage = round(
+        (last_late / last_total) * 100, 2
+    ) if last_total else 0
+
+    present_change = round(
+        present_percentage - last_present_percentage,
+        2
     )
 
-    if last_absent:
-        absent_change = round(
-        ((absent - last_absent) / last_absent) * 100, 2
+    absent_change = round(
+        absent_percentage - last_absent_percentage,
+        2
     )
 
-    if last_late:
-        late_change = round(
-        ((late - last_late) / last_late) * 100, 2
+    late_change = round(
+        late_percentage - last_late_percentage,
+        2
     )
+
+    #if last_present > 0:
+     #   present_change = round(
+      #  ((present - last_present) / last_present) * 100, 2
+    #)
+
+    #if last_absent > 0:
+      #  absent_change = round(
+      #  ((absent - last_absent) / last_absent) * 100, 2
+    #)
+
+    #if last_late > 0:
+    #    late_change = round(
+     #   ((late - last_late) / last_late) * 100, 2
+  #  )
+  
+    
+    batch_details = []
+
+    for batch in batches:
+
+        if Enrollment.objects.filter(batch=batch).exists():
+
+            batch_details.append({
+                "course": batch.course.course_name,
+                "batch": batch.batch_name,
+                "trainer": batch.trainer.trainer_name if batch.trainer else "Not Assigned",
+                "timing": f"{batch.start_time.strftime('%I:%M %p')} - {batch.end_time.strftime('%I:%M %p')}"
+            })
+        
+                
+                
 
     context = {
         "present": present,
@@ -409,6 +463,12 @@ def dashboard(request):
         "absent_change": absent_change,
         "late_change": late_change,
         "total_percentage":total_percentage,
+        "context_batches": batch_details,
+        "present_percentage": present_percentage,
+        "absent_percentage": absent_percentage,
+        "late_percentage": late_percentage,
+        "last_attendance_date": last_attendance_date,
+        
     }
 
     return render(
@@ -481,6 +541,7 @@ def mark_attendance_page(request, batch_id):
         'attendance/mark_attendance.html',
         context
     )
+
 
 
 @api_view(['GET'])
@@ -780,7 +841,7 @@ def student_attendance_summary(request, student_id):
 
     total = records.count()
 
-    percentage = round((present / total) * 100, 2) if total else 0
+    percentage = round(((present + late) / total) * 100, 2) if total else 0
 
     student = records.first().enrollment.student if records.exists() else None
 
@@ -850,6 +911,26 @@ def absent_tracker(request):
         }
     )
     
+from django.http import JsonResponse
+from django.utils import timezone
+from .models import AbsentTracker
+
+def mark_notification_sent(request, enrollment_id):
+    print("MARK NOTIFICATION CALLED", enrollment_id)
+
+    tracker, created = AbsentTracker.objects.get_or_create(
+        enrollment_id=enrollment_id
+    )
+
+    tracker.notification_sent = True
+    tracker.notification_status = "Dispatched"
+    tracker.last_notified_at = timezone.now()
+    tracker.save()
+
+    return JsonResponse({
+        "status": "success"
+    })
+    
 def get_admin_notes(request, tracker_id):
 
     tracker = AbsentTracker.objects.filter(
@@ -904,40 +985,55 @@ def save_admin_notes(request):
         "status": "success"
     })
 
-from .services import get_low_attendance_data
-from django.core.mail import send_mail
-from django.conf import settings
-from django.contrib import messages
-from django.shortcuts import get_object_or_404
-
 def low_attendance_alerts(request):
 
     low_attendance_students = (
         get_low_attendance_data()
     )
+
+    # --- Student name search (new) ---
+    name_filter = request.GET.get("name")
+
+    if name_filter:
+        low_attendance_students = [
+            student for student in low_attendance_students
+            if name_filter.lower() in (
+                f"{student['student'].first_name} {student['student'].last_name}".lower()
+            )
+        ]
+
+    # --- Course filter ---
     course_filter = request.GET.get("course")
 
     if course_filter:
         low_attendance_students = [
             student for student in low_attendance_students
-            if student["course"].lower() == course_filter.lower()
+            # FIX: student["course"] is a Course object, not a string,
+            # so we compare against .course_name instead of calling
+            # .lower() directly on the object (this was a bug before).
+            if student["course"].course_name.lower() == course_filter.lower()
         ]
+
+    # --- Batch filter ---
     batch_filter = request.GET.get("batch")
 
     if batch_filter:
         low_attendance_students = [
             student for student in low_attendance_students
-            if student["batch"].lower() == batch_filter.lower()
+            # FIX: compare by batch id (matches the <option value="{{ batch.id }}">
+            # in the template) instead of calling .lower() on the Batch object.
+            if str(student["batch"].id) == str(batch_filter)
         ]
 
+    # --- Attendance % filter ---
     attendance_filter = request.GET.get("attendance")
 
     if attendance_filter:
         low_attendance_students = [
-        student
-        for student in low_attendance_students
-        if student["attendance_percentage"] == float(attendance_filter)
-    ]
+            student
+            for student in low_attendance_students
+            if student["attendance_percentage"] == float(attendance_filter)
+        ]
 
     critical_students = [
         student
@@ -951,6 +1047,19 @@ def low_attendance_alerts(request):
         if student["alert_level"] == "Warning"
     ]
 
+    # --- Stats for the top cards (Critical / Warning / Total / Average) ---
+    total_students = len(low_attendance_students)
+
+    overall_average = (
+        round(
+            sum(s["attendance_percentage"] for s in low_attendance_students)
+            / total_students,
+            1
+        )
+        if total_students > 0
+        else 0
+    )
+
     courses = Course.objects.all()
 
     batches = Batch.objects.all()
@@ -962,19 +1071,105 @@ def low_attendance_alerts(request):
         'attendance/low_attendance.html',
 
         {
-            'low_attendance_students':
-            low_attendance_students,
+            'low_attendance_students': low_attendance_students,
 
             "critical_students": critical_students,
             "warning_students": warning_students,
 
+            "total_students": total_students,
+            "overall_average": overall_average,
+
             'courses': courses,
 
             'batches': batches,
+
+            "filters": {
+                "name": name_filter or "",
+                "course": course_filter or "",
+                "batch": batch_filter or "",
+                "attendance": attendance_filter or "",
+            },
         }
 
     )
-    
+
+
+from openpyxl import Workbook
+from django.http import HttpResponse
+from openpyxl.styles import Font, PatternFill
+
+def low_attendance_export(request):
+
+    alert_type = request.GET.get("type")
+
+    students = get_low_attendance_data()
+
+    if alert_type == "critical":
+        students = [
+            s for s in students
+            if s["alert_level"] == "Critical"
+        ]
+        file_name = "critical_alerts.xlsx"
+
+    else:
+        students = [
+            s for s in students
+            if s["alert_level"] == "Warning"
+        ]
+        file_name = "warning_alerts.xlsx"
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Low Attendance"
+
+    headers = [
+        "Student Name",
+        "Course",
+        "Batch",
+        "Attendance %",
+        "Consecutive Absences",
+        "Total Absences"
+    ]
+
+    ws.append(headers)
+
+    header_fill = PatternFill(
+        start_color="1E40AF",
+        end_color="1E40AF",
+        fill_type="solid"
+    )
+
+    for cell in ws[1]:
+        cell.font = Font(
+            bold=True,
+            color="FFFFFF"
+        )
+        cell.fill = header_fill
+
+    for student in students:
+
+        ws.append([
+            f"{student['student'].first_name} {student['student'].last_name}",
+            student['course'].course_name,
+            student['batch'].batch_name,
+            student['attendance_percentage'],
+            student['consecutive_absences'],
+            student['total_absences']
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    response['Content-Disposition'] = (
+        f'attachment; filename="{file_name}"'
+    )
+
+    wb.save(response)
+
+    return response
+
+
 def send_low_attendance_email(request, enrollment_id):
 
     enrollment = get_object_or_404(
@@ -1061,8 +1256,9 @@ CSC Computer Education
     )
 
     return JsonResponse({
-    "message": "📧 Email sent successfully"
-})
+        "message": "📧 Email sent successfully"
+    })
+
 
 def send_sms_notification(request, enrollment_id):
 
@@ -1134,8 +1330,135 @@ Please attend classes regularly.
     )
 
     return JsonResponse({
-    "message": "📱 SMS sent successfully"
-})
+        "message": "📱 SMS sent successfully"
+    })
+
+
+@require_POST
+def send_bulk_notification(request):
+    """
+    NEW endpoint used by the redesigned page.
+
+    Sends SMS/Email only to the students whose checkboxes are
+    ticked inside a given alert section ("Send SMS" / "Send Email"
+    buttons in the Critical / Warning section headers).
+
+    Expects a JSON body like:
+        { "type": "email" | "sms", "enrollment_ids": [12, 14, 19] }
+
+    Add this to your urls.py:
+        path('api/send-bulk-notification/', views.send_bulk_notification,
+             name='send_bulk_notification'),
+    """
+
+    try:
+        payload = json.loads(request.body)
+    except (json.JSONDecodeError, TypeError):
+        return JsonResponse({"message": "Invalid request data"}, status=400)
+
+    notification_type = payload.get("type")
+    enrollment_ids = payload.get("enrollment_ids", [])
+
+    if notification_type not in ("sms", "email"):
+        return JsonResponse({"message": "Invalid notification type"}, status=400)
+
+    if not enrollment_ids:
+        return JsonResponse({"message": "No students selected"}, status=400)
+
+    total_working_days = Attendance.objects.values(
+        'attendance_date'
+    ).distinct().count()
+
+    sent_count = 0
+
+    for enrollment_id in enrollment_ids:
+
+        enrollment = Enrollment.objects.filter(id=enrollment_id).first()
+
+        if not enrollment:
+            continue
+
+        student = enrollment.student
+
+        present_count = Attendance.objects.filter(
+            enrollment=enrollment,
+            status='Present'
+        ).count()
+
+        attendance_percentage = (
+            round(
+                (present_count / total_working_days) * 100,
+                1
+            )
+            if total_working_days > 0
+            else 100
+        )
+
+        is_critical = attendance_percentage < 60
+
+        if notification_type == "email":
+
+            if not student.email:
+                continue
+
+            subject = (
+                "Critical Attendance Alert"
+                if is_critical else "Low Attendance Warning"
+            )
+
+            message = f"""
+Dear {student.first_name},
+
+Your attendance percentage is {"critically low" if is_critical else "below the required level"}.
+
+Attendance Percentage: {attendance_percentage}%
+
+{"Immediate action is required." if is_critical else "Please attend classes regularly."}
+
+Regards,
+CSC Computer Education
+"""
+
+            send_mail(
+
+                subject,
+
+                message,
+
+                settings.DEFAULT_FROM_EMAIL,
+
+                [student.email],
+
+                fail_silently=False
+
+            )
+
+            sent_count += 1
+
+        else:
+
+            sms_message = f"""
+CSC ALERT
+
+{"Critical Attendance Alert" if is_critical else "Low Attendance Warning"}
+
+Student:
+{student.first_name}
+
+Attendance:
+{attendance_percentage}%
+"""
+
+            print(sms_message)
+
+            sent_count += 1
+
+    label = "Emails" if notification_type == "email" else "SMS"
+
+    return JsonResponse({
+        "message": f"✅ {label} sent to {sent_count} student(s)"
+    })
+
 
 def send_email_all(request):
 
@@ -1214,6 +1537,7 @@ CSC Computer Education
 
     })
 
+
 def send_sms_all(request):
 
     low_attendance_students = (
@@ -1264,8 +1588,9 @@ Attendance:
     )
 
     return JsonResponse({
-    "message": " All SMS notifications sent"
-})
+        "message": " All SMS notifications sent"
+    })
+
 
 def send_monthly_report(request):
 
@@ -1326,8 +1651,8 @@ Total Absences:
     )
 
     return JsonResponse({
-    "message": "📊 Monthly report sent successfully"
-})
+        "message": "📊 Monthly report sent successfully"
+    })
     #Reports 
     
 from django.shortcuts import render
@@ -1356,13 +1681,9 @@ def get_report_students():
     for enrollment in enrollments:
 
         present_count = Attendance.objects.filter(
-            enrollment=enrollment
-            
-        ).filter(
-            Q(status='Present') |
-            Q(status='Late')
+            enrollment=enrollment,
+            status='Present'
         ).count()
-
         absent_count = Attendance.objects.filter(
             enrollment=enrollment,
             status='Absent'
@@ -1373,8 +1694,19 @@ def get_report_students():
             status='Late'
         ).count()
 
+        total_days = (
+            present_count +
+            absent_count +
+            late_count
+        )
+
+        effective_present = (
+            present_count +
+            late_count
+        )
+
         attendance_rate = round(
-            (present_count / total_days) * 100,
+            (effective_present / total_days) * 100,
             1
         ) if total_days > 0 else 0
 
@@ -1554,9 +1886,9 @@ def reports(request):
         'attendance_date'
     ).distinct().count()
     
-    if status_filter:
+    filtered_students = []
 
-        filtered_students = []
+    if status_filter or attendance_filter:
 
         for enrollment in enrollments:
 
@@ -1607,7 +1939,20 @@ def reports(request):
             else:
                 status = "Critical"
 
-            if status.lower() == status_filter.lower():
+            #if status.lower() == status_filter.lower():
+
+               # filtered_students.append(
+                #    enrollment.id
+               # )
+            if status_filter:
+
+                if status.lower() == status_filter.lower():
+
+                    filtered_students.append(
+                        enrollment.id
+                    )
+
+            else:
 
                 filtered_students.append(
                     enrollment.id
@@ -1623,11 +1968,8 @@ def reports(request):
 
         present_count = Attendance.objects.filter(
             enrollment=enrollment,
-            
-        ).filter(
-            Q(status='Present') |
-            Q(status='Late')
-            ).count()
+            status='Present'
+        ).count()
 
         absent_count = Attendance.objects.filter(
             enrollment=enrollment,
@@ -1652,7 +1994,7 @@ def reports(request):
 
         attendance_rate = round(
             (effective_present / total_days) * 100,
-             1
+            1
         ) if total_days else 0
 
     
@@ -1717,6 +2059,28 @@ def reports(request):
     
     attendance_qs = Attendance.objects.all()
     
+    if student_name:
+        attendance_qs = attendance_qs.filter(
+            enrollment__admission__student__first_name__istartswith=
+            student_name
+        )
+    if status_filter or attendance_filter:
+
+        student_ids = []
+
+        for enrollment in enrollments:
+
+            student_ids.append(
+                enrollment.id
+            )
+        print("Attendance Filter =", attendance_filter)
+        print("Student IDs =", student_ids)
+        print("Enrollment Count =", enrollments.count())
+
+        attendance_qs = attendance_qs.filter(
+            enrollment_id__in=student_ids
+        )
+    
     if course_filter:
         attendance_qs = attendance_qs.filter(
             enrollment__admission__course_name__course_name__icontains=
@@ -1771,6 +2135,12 @@ def reports(request):
         )
 
     # Batch Analytics
+    filtered_enrollment_ids = [
+        enrollment.id
+        for enrollment in enrollments
+    ]
+    
+    print("Batch Chart IDs =", filtered_enrollment_ids)
 
     batch_labels = []
     batch_counts = []
@@ -1798,6 +2168,7 @@ def reports(request):
 
             
         )
+        
 
     for batch in batches:
 
@@ -1816,27 +2187,28 @@ def reports(request):
         
         
         present_count = Attendance.objects.filter(
+            enrollment_id__in=filtered_enrollment_ids,
             batch=batch,
             attendance_date=latest_attendance.attendance_date,
-           #).filter(
-               # Q(status="Present") |
-            #    Q(status="Late")
             status="Present"
         ).count()
         
         absent_count = Attendance.objects.filter(
+            enrollment_id__in=filtered_enrollment_ids,
             batch=batch,
             attendance_date=latest_attendance.attendance_date,
             status="Absent"
         ).count()
         
         late_count = Attendance.objects.filter(
+            enrollment_id__in=filtered_enrollment_ids,
             batch=batch,
             attendance_date=latest_attendance.attendance_date,
             status="Late"
         ).count()
 
         total_count = Attendance.objects.filter(
+            enrollment_id__in=filtered_enrollment_ids,
             batch=batch,
             attendance_date=latest_attendance.attendance_date
         ).count()
@@ -1890,6 +2262,10 @@ def reports(request):
                 f"Monthly Attendance Chart - "
                 f"{course_filter.title()}"
             )
+        print("Batch Labels =", batch_labels)
+        print("Present =", batch_present_list)
+        print("Absent =", batch_absent_list)
+        print("Late =", batch_late_list)
 
     context = {
 
@@ -3532,3 +3908,4 @@ def report_excel(request):
     wb.save(response)
 
     return response
+

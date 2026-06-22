@@ -102,7 +102,7 @@
                 <option value="">Batch</option>
 
                 {% for batch in batches %}
-               <option value="{{ batch.id }}">
+                <option value="{{ batch.id }}">
                     {{ batch.batch_name }}
                     ({{ batch.course.course_name }})
                 </option>
@@ -152,6 +152,11 @@
         <div id="resultsCount" class="results-count">
 
             Showing {{ absent_students|length }} of {{ absent_students|length }} Students
+
+        </div>
+        <div id="noResultsMessage" style="display:none; text-align:center; padding:20px; font-weight:bold;">
+
+            No records found
 
         </div>
 
@@ -220,8 +225,7 @@
 
                     <tr class="student-row"
                         data-name="{{ student.student.first_name|lower }} {{ student.student.last_name|lower }}"
-                        data-course="{{ student.course.course_name|lower }}"
-                        data-batch="{{ student.batch.id }}"
+                        data-course="{{ student.course.course_name|lower }}" data-batch="{{ student.batch.id }}"
                         data-phone="{{ student.student.phone_no|lower }}" data-email="{{ student.student.email|lower }}"
                         data-status="{{ student.alert_level|lower }}">
 
@@ -546,6 +550,13 @@
                                 "click",
 
                                 function () {
+                                    const studentId = button.dataset.id;
+
+                                    fetch(`/api/mark-notification/${studentId}/`)
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            console.log(data);
+                                        });
 
                                     // PREVENT MULTIPLE CLICKS
 
@@ -734,9 +745,19 @@
                 ).innerHTML =
 
                     `Showing ${visibleCount} of ${totalCount} Students`;
+                if (visibleCount === 0) {
+
+                    document.getElementById("noResultsMessage").style.display = "block";
+
+                } else {
+
+                    document.getElementById("noResultsMessage").style.display = "none";
+
+                }
 
 
             }
+
 
             document.querySelectorAll(
                 ".filter-input, .filter-select"
