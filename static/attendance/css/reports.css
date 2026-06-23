@@ -519,6 +519,17 @@ canvas{
 
 }
 
+.chart-warning{
+    min-height:300px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    font-size:16px;
+    font-weight:600;
+    color:#f59e0b;
+}
+
 /* =========================
    RESPONSIVE
 ========================= */
