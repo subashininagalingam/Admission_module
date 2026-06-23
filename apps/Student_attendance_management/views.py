@@ -985,6 +985,11 @@ def save_admin_notes(request):
         "status": "success"
     })
 
+from django.shortcuts import render, get_object_or_404
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib import messages
+
 def low_attendance_alerts(request):
 
     low_attendance_students = (

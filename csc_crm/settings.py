@@ -162,8 +162,8 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 
-# EMAIL_HOST_USER = "gopikas04082005@gmail.com"
-# EMAIL_HOST_PASSWORD = "qmfhpjepymvbypra"
+# EMAIL_HOST_USER = "subanagalingam.dev@gmail.com"
+# EMAIL_HOST_PASSWORD = "zeludedbxmitggvz"
 
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
