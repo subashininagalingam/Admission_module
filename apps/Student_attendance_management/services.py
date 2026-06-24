@@ -150,12 +150,6 @@ def get_low_attendance_data():
 
     students_data = []
 
-    total_working_days = (
-        Attendance.objects
-        .values('attendance_date')
-        .distinct()
-        .count()
-    )
 
     enrollments = Enrollment.objects.select_related(
         'admission__student',
@@ -167,6 +161,13 @@ def get_low_attendance_data():
         attendance_records = Attendance.objects.filter(
             enrollment=enrollment
         ).order_by('-attendance_date')
+
+        total_working_days = (
+            attendance_records
+            .values('attendance_date')
+            .distinct()
+            .count()
+        )
         
         if attendance_records.count() < 3:
             continue
@@ -204,14 +205,13 @@ def get_low_attendance_data():
         # Alert Logic
         if (
             attendance_percentage < 60
-            and total_absences >= 3
+            
         ):
 
             alert_level = "Critical"
 
         elif (
             attendance_percentage < 75
-            and (total_absences >= 1 and total_absences<=2)
         ):
 
             alert_level = "Warning"

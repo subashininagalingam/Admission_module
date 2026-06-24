@@ -1659,6 +1659,7 @@ Total Absences:
         "message": "📊 Monthly report sent successfully"
     })
     
+    
     #Reports 
     
 from django.shortcuts import render
