@@ -146,7 +146,7 @@
                         <label class="form-label">Duration *</label>
 
                         <div class="row">
-                            <div class="col-6">
+                            <!-- <div class="col-6">
                                 <input type="number" id="durationHours" class="form-control" placeholder="Hours"
                                     min="0" value="{{ duration_hours }}" oninput="toggleUnit('durationHours','hoursUnit')">
                                 <span id="hoursUnit" class="input-group-text" style="display:none;">Hours</span>
@@ -156,8 +156,35 @@
                                 <input type="number" id="durationMinutes" class="form-control" placeholder="Minutes"
                                     min="0" max="59" value="{{ duration_minutes }}" oninput="toggleUnit('durationMinutes','minutesUnit')">
                                 <span id="minutesUnit" class="input-group-text" style="display:none;">Minutes</span>
-                            </div>
+                            </div> -->
+                            <div class="col-6">
+    <div class="form-floating">
+        <input type="number"
+               class="form-control"
+               id="durationHours"
+               name="duration_hours"
+               placeholder="Hours"
+               min="0"
+               value="{{ duration_hours }}">
+        <label for="durationHours" style="color:gray;">Hours</label>
+    </div>
+</div>
+
+<div class="col-6">
+    <div class="form-floating">
+        <input type="number"
+               class="form-control"
+               id="durationMinutes"
+               name="duration_minutes"
+               placeholder="Minutes"
+               min="0"
+               max="59"
+               value="{{ duration_minutes }}">
+        <label for="durationMinutes" style="color: gray;">Minutes</label>
+    </div>
+</div>
                         </div>
+                        
                         <div id="durationError"
                          class="text-danger mt-1">
                         </div>

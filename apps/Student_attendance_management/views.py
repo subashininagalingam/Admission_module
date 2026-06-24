@@ -1658,6 +1658,7 @@ Total Absences:
     return JsonResponse({
         "message": "📊 Monthly report sent successfully"
     })
+    
     #Reports 
     
 from django.shortcuts import render
