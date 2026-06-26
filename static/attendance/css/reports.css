@@ -520,14 +520,28 @@ canvas{
 }
 
 .chart-warning{
-    min-height:300px;
+    height:300px;
     display:flex;
+    flex-direction:column;
     justify-content:center;
     align-items:center;
     text-align:center;
-    font-size:16px;
-    font-weight:600;
+    color:#6b7280;
+}
+
+.chart-warning i{
+    font-size:40px;
     color:#f59e0b;
+    margin-bottom:10px;
+}
+
+.chart-warning h5{
+    margin-bottom:8px;
+    font-weight:600;
+}
+
+.chart-warning p{
+    margin:0;
 }
 
 /* =========================

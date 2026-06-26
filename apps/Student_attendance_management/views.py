@@ -2274,6 +2274,52 @@ def reports(request):
         print("Absent =", batch_absent_list)
         print("Late =", batch_late_list)
 
+    is_filtered = bool(
+    course_filter or
+    batch_filter or
+    student_name or
+    status_filter or
+    attendance_filter
+)
+    
+    total_attendance = (
+    sum(batch_present_list) +
+    sum(batch_absent_list) +
+    sum(batch_late_list)
+)
+
+    show_batch_chart = True
+    
+    if is_filtered and (course_filter or batch_filter):
+        show_batch_chart = total_attendance > 0
+
+    warning_message = ""
+
+    if not show_batch_chart:
+        if batch_filter:
+            warning_message = (
+            "Attendance has not been marked for the selected batch today."
+        )
+
+        elif course_filter:
+            warning_message = (
+            "Attendance has not been marked for the selected course today."
+        )
+    
+    batch_status_map = {}
+
+    today = timezone.now().date()
+
+    for batch in Batch.objects.all():
+        marked = Attendance.objects.filter(
+        batch=batch,
+        attendance_date=today
+        ).exists()
+
+        batch_status_map[batch.id] = (
+        "not_started" if not marked else "done"
+        )
+
     context = {
 
         "total_students":
@@ -2342,10 +2388,14 @@ def reports(request):
         
         "attendance_date": attendance_date,
         
-        
-        
-        
-            
+        "batch_status_map": batch_status_map, 
+
+      
+        "is_filtered": is_filtered,
+        "show_batch_chart": show_batch_chart,
+
+        "warning_message": warning_message,
+     
 
     }
 

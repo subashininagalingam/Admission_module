@@ -586,6 +586,27 @@ function applyFilters() {
             'select[name="course_name"]'
         ).value.toLowerCase();
 
+    // 👇 INGA PASTE PANNU
+
+    document.querySelector('.download-form input[name="search"]').value =
+        document.querySelector('input[name="search"]').value;
+
+    document.querySelector('.download-form input[name="from_date"]').value =
+        document.querySelector('input[name="from_date"]').value;
+
+    document.querySelector('.download-form input[name="to_date"]').value =
+        document.querySelector('input[name="to_date"]').value;
+
+    document.querySelector('.download-form input[name="status"]').value =
+        document.querySelector('select[name="status"]').value;
+
+    document.querySelector('.download-form input[name="batch"]').value =
+        document.querySelector('select[name="batch"]').value;
+
+    document.querySelector('.download-form input[name="course_name"]').value =
+        document.querySelector('select[name="course_name"]').value;
+
+
     document
         .querySelectorAll(".attendance-row")
         .forEach(row => {

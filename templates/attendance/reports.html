@@ -227,11 +227,23 @@
 
                     </div>
 
-                    <div class="pie-chart-container">
+                    {% if show_batch_chart %}
 
-                        <canvas id="batchChart"></canvas>
+<div class="pie-chart-container">
+    <canvas id="batchChart"></canvas>
+</div>
 
-                    </div>
+{% else %}
+
+<div class="chart-warning">
+    <i class="fas fa-exclamation-triangle"></i>
+
+    <h5>Attendance Not Available</h5>
+
+    <p>{{ warning_message }}</p>
+</div>
+
+{% endif %}
 
                 </div>
 
@@ -429,6 +441,7 @@
     {{ batch_absent_list|json_script:"batch-absent-list" }}
     {{ batch_late_list|json_script:"batch-late-list" }}
     {{ batch_percentage_list|json_script:"batch-percentage-list" }}
+    {{ batch_status_map|json_script:"batch-status-map" }}
 
     {{ latest_month|json_script:"latest-month" }}
 
@@ -629,6 +642,7 @@ const chartColors = batchLabels.map(
     (_, index) => colors[index % colors.length]
 );
 
+if (batchChart) {
         new Chart(
             batchChart,
             {
@@ -710,6 +724,7 @@ const chartColors = batchLabels.map(
 
             }
         );
+        }
 
 
         const batchPerformanceLabels = JSON.parse(
