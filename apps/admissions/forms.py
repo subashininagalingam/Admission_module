@@ -154,7 +154,7 @@ class EnrollmentForm(forms.ModelForm):
 
     def clean_start_date(self):
         start_date = self.cleaned_data['start_date']
-        if start_date <= date.today():
+        if start_date < date.today():
             raise forms.ValidationError("Start date must be future!")
         return start_date
 

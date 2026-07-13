@@ -535,13 +535,13 @@ def student_list(request):
                 enrollment = getattr(admission, 'enrollment', None)
 
                 ws.append([
-                    f"{s.first_name} {s.last_name}",
-                    str(admission.course_name) if admission else "-",
-                    enrollment.batch if enrollment else "-",
-                    s.phone_no,
-                    enrollment.payment_status if enrollment else "-",
-                    str(enrollment.start_date) if enrollment else "-"
-                ])
+    f"{s.first_name} {s.last_name}",
+    str(admission.course_name) if admission else "-",
+    enrollment.batch.batch_name if enrollment and enrollment.batch else "-",
+    s.phone_no,
+    enrollment.payment_status if enrollment else "-",
+    str(enrollment.start_date) if enrollment else "-"
+])
  
         column_widths = {
     'A': 25,
